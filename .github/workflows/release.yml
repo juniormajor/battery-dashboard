@@ -1,0 +1,36 @@
+# Baut bei jedem Tag v* und haengt dist/battery-dashboard.js an das Release (A01d E3, E11).
+# Node-Hauptversion gleich der lokalen (22); dist/ wird nicht eingecheckt.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhaengigkeiten
+        run: npm ci
+
+      - name: Version aus dem Tag
+        run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#v}"
+
+      - name: Bauen
+        run: npm run build
+
+      - name: Release mit battery-dashboard.js
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/battery-dashboard.js --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
