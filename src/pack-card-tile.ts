@@ -375,7 +375,7 @@ export class PackCardTile extends LitElement {
     return html`<span class="leds">
       ${led('run', fresh, 'RUN', fresh ? 'Daten frisch' : `keine Daten seit über ${STALE_S} s`)}
       ${led('alm', alarm, 'ALM', alarm ? 'Fehlertext des BMS' : 'kein Fehlertext')}
-      ${led('bal', bal, 'BAL', bal ? 'Balancer aktiv' : 'Balancer ruht')} ${led('em', em, 'NOT', em ? 'Notbetrieb an' : 'Notbetrieb aus')}
+      ${led('bal', bal, 'BAL', bal ? 'Balancer aktiv' : 'Balancer ruht')} ${led('em', em, 'EMG', em ? 'Notbetrieb an' : 'Notbetrieb aus')}
     </span>`;
   }
 
