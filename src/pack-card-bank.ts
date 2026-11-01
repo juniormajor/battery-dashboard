@@ -8,12 +8,16 @@ import { fallback, group, sharedStyles, socColor, thermo, val } from './ui';
 export type CapUnit = 'Ah' | 'kWh';
 
 /**
- * Alarme des BMS-Masters. A01d nennt `_cell_imbalance` und „die uebrigen Alarme“ ohne Aufzaehlung;
- * `low_charge_temperature` stammt aus dem Mockup. Fehlende Entitaeten werden uebersprungen (E10).
+ * Alarme des BMS-Masters (enum no_alarm / warning / alarm), live gelesen an der Alt-Instanz am 2026-11-01.
+ * Fehlende Entitaeten werden uebersprungen (E10).
  */
 const ALARMS: [string, string][] = [
   ['cell_imbalance', 'Zellungleichgewicht'],
   ['low_charge_temperature', 'Ladetemperatur niedrig'],
+  ['high_charge_temperature', 'Ladetemperatur hoch'],
+  ['high_charge_current', 'Ladestrom hoch'],
+  ['high_discharge_current', 'Entladestrom hoch'],
+  ['internal_failure', 'interner Fehler'],
 ];
 
 /** 0 = kein Alarm, 1 = Warnung, 2 = Alarm (Victron-Kodierung 0/1/2 bzw. Text). */
