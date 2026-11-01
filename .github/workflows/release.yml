@@ -1,4 +1,5 @@
 # Baut bei jedem Tag v* und haengt dist/battery-dashboard.js an das Release (A01d E3, E11).
+# Ausloeser: Tag per git push oder ein im Web-UI veroeffentlichtes Release (legt den Tag dort an).
 # Node-Hauptversion gleich der lokalen (22); dist/ wird nicht eingecheckt.
 name: release
 
@@ -6,12 +7,16 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types:
+      - published
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -33,4 +38,9 @@ jobs:
       - name: Release mit battery-dashboard.js
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/battery-dashboard.js --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/battery-dashboard.js --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/battery-dashboard.js --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          fi
