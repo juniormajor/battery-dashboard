@@ -1,40 +1,13 @@
 // Gehaeuse eines Packs (A01d E17, E21). Eigenes Element, damit ein Fehler auf dieses Pack begrenzt bleibt (E10, R6).
-// Klemmen oben, links senkrechter SoC-Balken mit SoC und SoH, oben Name mit Lampen RUN/ALM/BAL/NOT, BLE-Pegel und
+// Klemmen oben, links senkrechter SoC-Balken mit SoC und SoH, oben Name mit Lampen RUN/ALM/BAL/EMG, BLE-Pegel und
 // Datenalter, rechts „U / I / P“, „ΔU / I Bal“ und die hoechste Temperatur mit Fuehler; Fehlertext in der Kopfzeile (E8).
 import { LitElement, html, css, TemplateResult } from 'lit';
-import {
-  Hass,
-  PackConfig,
-  STALE_S,
-  ZELLEN_PACK,
-  ageSeconds,
-  numberOf,
-  packEntity,
-  stackEntity,
-  stackOf,
-  stateOf,
-  textOf,
-  unitOf,
-} from './entities';
-import { DASH, ageText, num, snum } from './format';
-import { fallback, group, navigate, sharedStyles, socColor, thermo, val, viewPath } from './ui';
+import { Hass, PackConfig, STALE_S, ZELLEN_PACK, ageSeconds, numberOf, packEntity, stateOf, textOf } from './entities';
+import { DASH, num, snum } from './format';
+import { band, bleInfo, deltaMv, maxTemp, packAge, packLeds, packPartStyles } from './pack-parts';
+import { fallback, group, navigate, selectPack, sharedStyles, socColor, thermo, val, viewPath } from './ui';
 
 export type SocFrame = '' | 'lo' | 'hi';
-
-/** Fuehler in der Benennung der JK-App (E21, A01e „Temperaturfuehler“): ESPHome-Fuehler 3 = JK 5; Fuehler 5 = Spiegel des IC, entfaellt. */
-const TEMPS: [string, string][] = [
-  ['IC', 'mosfet_temperature'],
-  ['1', 'temperature_sensor_1'],
-  ['2', 'temperature_sensor_2'],
-  ['4', 'temperature_sensor_4'],
-  ['5', 'temperature_sensor_3'],
-];
-
-/** Toenung des Bildschirms nach ΔU (Mockup band(): ab 5 mV und ab 15 mV). */
-function band(dmv: number | undefined): string {
-  if (dmv === undefined) return '';
-  return dmv >= 15 ? 't-warn' : dmv >= 5 ? 't-soft' : '';
-}
 
 /** Daten fuer die Rahmen min/max SoC im Rahmen der Karte: SoC nur, wenn das Pack frische Daten liefert. */
 export function packSocForFrame(hass: Hass | undefined, p: PackConfig, now: number): number | undefined {
@@ -62,6 +35,7 @@ export class PackCardTile extends LitElement {
 
   static styles = [
     sharedStyles,
+    packPartStyles,
     css`
       :host {
         display: block;
@@ -162,55 +136,6 @@ export class PackCardTile extends LitElement {
       .case-h .link {
         font-size: 15px;
       }
-      .badge-m {
-        font-size: 10px;
-        font-weight: 700;
-        border: 1px solid var(--pc-accent);
-        color: var(--pc-accent);
-        border-radius: 4px;
-        padding: 0 4px;
-      }
-      .leds {
-        display: inline-flex;
-        gap: 8px;
-        font-size: 10px;
-        letter-spacing: 0.05em;
-        color: var(--pc-fg3);
-        align-items: center;
-      }
-      .led {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-      }
-      .led i {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--pc-fg3) 40%, transparent);
-      }
-      .led.on.run i {
-        background: var(--pc-ok);
-        box-shadow: 0 0 6px var(--pc-ok);
-      }
-      .led.on.alm i {
-        background: var(--pc-bad);
-        box-shadow: 0 0 6px var(--pc-bad);
-      }
-      .led.on.bal i {
-        background: var(--pc-bal);
-        box-shadow: 0 0 6px var(--pc-bal);
-        animation: blink 1.2s ease-in-out infinite;
-      }
-      .led.on.em i {
-        background: var(--pc-warn);
-        box-shadow: 0 0 6px var(--pc-warn);
-      }
-      @keyframes blink {
-        50% {
-          opacity: 0.35;
-        }
-      }
       .err {
         flex: 1 1 7em;
         min-width: 0;
@@ -229,50 +154,9 @@ export class PackCardTile extends LitElement {
         display: inline;
         max-width: 100%;
       }
-      .ble {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 11.5px;
-        color: var(--pc-fg2);
-        white-space: nowrap;
-      }
-      .dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        display: inline-block;
-        background: var(--pc-ok);
-        flex: none;
-      }
-      .dot.off {
-        background: var(--pc-bad);
-      }
-      .scr {
-        border-radius: 6px;
-        padding: 5px 8px;
-        background: var(--pc-screen);
-        border: 1px solid var(--pc-line);
-        min-width: 0;
-      }
-      .scr.t-soft {
-        background: color-mix(in srgb, var(--pc-soft) 13%, var(--pc-screen));
-      }
-      .scr.t-warn {
-        background: color-mix(in srgb, var(--pc-warn) 15%, var(--pc-screen));
-      }
-      .scr.t-bad {
-        background: color-mix(in srgb, var(--pc-bad) 18%, var(--pc-screen));
-      }
-      .scr.t-off {
-        opacity: 0.55;
-      }
       .scr .grp {
         font-size: 12.5px;
         justify-content: start;
-      }
-      .balv {
-        color: var(--pc-bal);
       }
       @container (max-width: 340px) {
         .case {
@@ -288,11 +172,6 @@ export class PackCardTile extends LitElement {
         }
         .scr .grp .gk {
           padding-right: 3px;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .led.on.bal i {
-          animation: none;
         }
       }
     `,
@@ -314,11 +193,10 @@ export class PackCardTile extends LitElement {
     const E = (dom: string, key: string) => packEntity(p, dom, key);
     const socId = E('sensor', 'state_of_charge');
     const soc = numberOf(h, socId);
-    const age = ageSeconds(h, E('sensor', 'total_runtime'), this.now || Date.now());
-    const fresh = age !== undefined && age <= STALE_S;
+    const { age, fresh } = packAge(h, p, this.now);
     const err = textOf(h, E('sensor', 'errors'));
     const incomplete = soc === undefined || numberOf(h, E('sensor', 'total_voltage')) === undefined;
-    const dmv = this.deltaMv();
+    const dmv = deltaMv(h, p);
     const tint = !fresh ? 't-off' : err ? 't-bad' : band(dmv);
     const frame = this.frame === 'lo' ? 'soc-lo' : this.frame === 'hi' ? 'soc-hi' : '';
 
@@ -333,26 +211,19 @@ export class PackCardTile extends LitElement {
         </div>
         <div class="case-c">
           <div class="case-h">
-            ${this.renderName()} ${this.renderLeds(fresh, !!err)}
+            ${this.renderName()} ${packLeds(h, p, fresh, !!err)}
             ${err
               ? html`<span class="err">${val(this, h, E('sensor', 'errors'), err)}</span>`
               : incomplete
                 ? html`<span class="tag mut">Daten unvollständig</span>`
                 : ''}
             <span class="sp"></span>
-            ${this.renderBle(fresh, age)}
+            ${bleInfo(this, h, p, fresh, age)}
           </div>
           <div class="scr ${tint}">${this.renderValues(dmv)}</div>
         </div>
       </article>
     </div>`;
-  }
-
-  private deltaMv(): number | undefined {
-    const id = packEntity(this.pack!, 'sensor', 'delta_cell_voltage');
-    const d = numberOf(this.hass, id);
-    if (d === undefined) return undefined;
-    return unitOf(this.hass, id) === 'mV' ? d : d * 1000;
   }
 
   private renderName(): TemplateResult {
@@ -365,40 +236,12 @@ export class PackCardTile extends LitElement {
       ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}`;
   }
 
-  private renderLeds(fresh: boolean, alarm: boolean): TemplateResult {
-    const h = this.hass;
-    const p = this.pack!;
-    const bal = stateOf(h, packEntity(p, 'binary_sensor', 'balancing'))?.state === 'on';
-    const em = stateOf(h, packEntity(p, 'switch', 'emergency'))?.state === 'on';
-    const led = (cls: string, on: boolean, label: string, title: string) =>
-      html`<span class="led ${cls} ${on ? 'on' : ''}" title=${title}><i></i>${label}</span>`;
-    return html`<span class="leds">
-      ${led('run', fresh, 'RUN', fresh ? 'Daten frisch' : `keine Daten seit über ${STALE_S} s`)}
-      ${led('alm', alarm, 'ALM', alarm ? 'Fehlertext des BMS' : 'kein Fehlertext')}
-      ${led('bal', bal, 'BAL', bal ? 'Balancer aktiv' : 'Balancer ruht')} ${led('em', em, 'EMG', em ? 'Notbetrieb an' : 'Notbetrieb aus')}
-    </span>`;
-  }
-
-  private renderBle(fresh: boolean, age: number | undefined): TemplateResult {
-    const h = this.hass;
-    const p = this.pack!;
-    const rssiId = stackEntity(stackOf(p), p, 'sensor', 'rssi');
-    return html`<span class="ble"
-      ><span class="dot ${fresh ? '' : 'off'}"></span>${val(this, h, rssiId, snum(numberOf(h, rssiId), 0, 'dBm'))} ·
-      ${val(this, h, packEntity(p, 'sensor', 'total_runtime'), ageText(age))}</span
-    >`;
-  }
-
   private renderValues(dmv: number | undefined): TemplateResult {
     const h = this.hass;
     const p = this.pack!;
     const E = (key: string) => packEntity(p, 'sensor', key);
     const bal = stateOf(h, packEntity(p, 'binary_sensor', 'balancing'))?.state === 'on';
-    let tMax: { v: number; s: string; id: string } | undefined;
-    for (const [label, key] of TEMPS) {
-      const v = numberOf(h, E(key));
-      if (v !== undefined && (!tMax || v > tMax.v)) tMax = { v, s: label, id: E(key) };
-    }
+    const tMax = maxTemp(h, p);
     return group(
       [
         {
@@ -433,18 +276,7 @@ export class PackCardTile extends LitElement {
   private _openPack = async (): Promise<void> => {
     const p = this.pack;
     if (!p) return;
-    const option = `Pack_${p.pack}`;
-    try {
-      const helper = stateOf(this.hass, ZELLEN_PACK);
-      const options = helper?.attributes?.options;
-      if (helper && this.hass?.callService && (!Array.isArray(options) || options.includes(option))) {
-        await this.hass.callService('input_select', 'select_option', { entity_id: ZELLEN_PACK, option });
-      } else {
-        console.warn(`pack-card: ${ZELLEN_PACK} nicht verfügbar oder ohne Option ${option}`);
-      }
-    } catch (e) {
-      console.warn(`pack-card: ${ZELLEN_PACK} nicht gesetzt`, e);
-    }
+    await selectPack(this.hass, p.pack);
     navigate(viewPath(this.packPath || 'pack'));
   };
 }

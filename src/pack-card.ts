@@ -1,5 +1,6 @@
 // Rahmen der Karte (A01d E1, E2): eine Instanz je Ansicht, konfiguriert werden packs, stacks und die Klickziele.
 // Ansicht speicher: Kopf (Ah/kWh, Zellanalyse), Bank-Display (E16), zentraler Notbetrieb (E7), Schrank (E17), Legende.
+// Ansicht pack: ein Pack aus input_select.zellen_pack (E5, E19), gezeichnet von pack-card-pack.
 import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
@@ -17,6 +18,8 @@ export interface PackCardConfig {
   pack_path?: string;
   /** Pfad der Zellanalyse, relativ zum Dashboard oder absolut ab „/“ (Standard zellen) */
   zellen_path?: string;
+  /** Pfad der Ansicht speicher fuer den Ruecklink der Packansicht (Standard speicher) */
+  speicher_path?: string;
 }
 
 const UNIT_KEY = 'pack-card-unit';
@@ -46,6 +49,7 @@ export class PackCard extends LitElement {
   private _view: View = 'speicher';
   private _packPath = 'pack';
   private _zellenPath = 'zellen';
+  private _speicherPath = 'speicher';
   private _unit: CapUnit = readUnit();
   private _now = Date.now();
   private _tick?: number;
@@ -168,7 +172,7 @@ export class PackCard extends LitElement {
     if (!['speicher', 'pack', 'zellen'].includes(view)) {
       throw new Error('pack-card: "view" muss speicher, pack oder zellen sein');
     }
-    for (const key of ['pack_path', 'zellen_path'] as const) {
+    for (const key of ['pack_path', 'zellen_path', 'speicher_path'] as const) {
       const v = config[key];
       if (v !== undefined && (typeof v !== 'string' || !v.trim())) {
         throw new Error(`pack-card: "${key}" muss ein nicht leerer Pfad sein`);
@@ -179,10 +183,11 @@ export class PackCard extends LitElement {
     this._view = view;
     this._packPath = config.pack_path?.trim() || 'pack';
     this._zellenPath = config.zellen_path?.trim() || 'zellen';
+    this._speicherPath = config.speicher_path?.trim() || 'speicher';
   }
 
   getCardSize(): number {
-    return 2 + this._packs.length;
+    return this._view === 'pack' ? 12 : 2 + this._packs.length;
   }
 
   getGridOptions() {
@@ -215,6 +220,22 @@ export class PackCard extends LitElement {
   }
 
   protected render(): TemplateResult {
+    if (this._view === 'pack') {
+      try {
+        return html`<ha-card>
+          <pack-card-pack
+            .hass=${this.hass}
+            .packs=${this._packs}
+            .stacks=${this._stacks}
+            .now=${this._now}
+            .speicherPath=${this._speicherPath}
+            .zellenPath=${this._zellenPath}
+          ></pack-card-pack>
+        </ha-card>`;
+      } catch (e) {
+        return html`<ha-card>${fallback('Ansicht pack', e)}</ha-card>`;
+      }
+    }
     if (this._view !== 'speicher') {
       return html`<ha-card><div class="hint">Ansicht ${this._view} folgt (A01d).</div></ha-card>`;
     }

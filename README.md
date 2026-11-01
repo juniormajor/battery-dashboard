@@ -21,12 +21,15 @@ stacks:
     name: Stack 2
 ```
 
-Klickziele (optional): `pack_path` ist die Packansicht (Standard `pack`), `zellen_path` die Zellanalyse (Standard `zellen`), jeweils relativ zum aktuellen Dashboard (`/<dashboard-url>/pack`) oder absolut ab `/`. Ein Klick auf „Pack n“ setzt vorher `input_select.zellen_pack` auf `Pack_<n>`.
+Klickziele (optional): `pack_path` ist die Packansicht (Standard `pack`), `zellen_path` die Zellanalyse (Standard `zellen`), `speicher_path` das Ziel des Rücklinks der Packansicht (Standard `speicher`), jeweils relativ zum aktuellen Dashboard (`/<dashboard-url>/pack`) oder absolut ab `/`. Ein Klick auf „Pack n“ setzt vorher `input_select.zellen_pack` auf `Pack_<n>`.
 
 ```yaml
 pack_path: pack
 zellen_path: zellen
+speicher_path: speicher
 ```
+
+Die Ansicht `pack` zeigt das Pack aus `input_select.zellen_pack` (`Pack_<n>`); fehlt der Helfer oder ist der Wert kein konfiguriertes Pack, das erste Pack aus `packs`. Vor- und Zurückblättern setzt nur den Helfer. Laden, Entladen und Bluetooth schalten mit einfachem Tippen ein, aber nur nach einer Sekunde Halten aus; Notbetrieb und BMS-Neustart verlangen in beide Richtungen eine Sekunde Halten.
 
 Abweichende Entitäten je Pack:
 

@@ -6,6 +6,8 @@ import { PackCardHold } from './pack-card-hold';
 import { PackCardBank } from './pack-card-bank';
 import { PackCardEmergency } from './pack-card-emergency';
 import { PackCardStackHead } from './pack-card-stack-head';
+import { PackCardCells } from './pack-card-cells';
+import { PackCardPack } from './pack-card-pack';
 
 declare const __VERSION__: string;
 
@@ -19,6 +21,8 @@ define('pack-card-emergency', PackCardEmergency);
 define('pack-card-stack-head', PackCardStackHead);
 define('pack-card-tile', PackCardTile);
 define('pack-card-row', PackCardRow);
+define('pack-card-cells', PackCardCells);
+define('pack-card-pack', PackCardPack);
 define('pack-card', PackCard);
 
 interface CustomCardEntry {

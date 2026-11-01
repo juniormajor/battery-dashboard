@@ -1,6 +1,7 @@
 // Gemeinsame Bausteine: anklickbarer Wert (E4), spaltenbuendige Gruppe (E21), Navigation, Rueckfall (E10), Stile (E15).
 import { css, html, TemplateResult } from 'lit';
-import { Hass, exists } from './entities';
+import { Hass, ZELLEN_PACK, exists, stateOf } from './entities';
+import { fmt } from './format';
 
 export function fireMoreInfo(node: EventTarget, entityId: string): void {
   node.dispatchEvent(new CustomEvent('hass-more-info', { detail: { entityId }, bubbles: true, composed: true }));
@@ -29,6 +30,8 @@ export interface GroupLine {
   v: unknown[];
   /** ein Wert ueber alle Wertspalten */
   span?: boolean;
+  /** kein „/“ vor dem dritten Wert (Zusatz wie die Balancer-Zellen) */
+  nosep?: boolean;
 }
 
 /** „Bezeichnung: Wert / Wert / Wert“, Spalten buendig, Zahlen rechtsbuendig (E21). */
@@ -40,7 +43,7 @@ export function group(lines: GroupLine[], cls = ''): TemplateResult {
         : html`<span class="gk">${l.k}</span>${[0, 1, 2].map(
             (i) =>
               html`<span class="gv">${l.v[i] ?? ''}</span>${i < 2
-                ? html`<span class="gs">${l.v[i + 1] !== undefined ? '/' : ''}</span>`
+                ? html`<span class="gs">${l.v[i + 1] !== undefined && !(i === 1 && l.nosep) ? '/' : ''}</span>`
                 : ''}`,
           )}`,
     )}
@@ -63,6 +66,39 @@ export function viewPath(p: string): string {
 export function navigate(path: string): void {
   history.pushState(null, '', path);
   window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: false } }));
+}
+
+/**
+ * Pack-Helfer setzen (E5, E6): input_select.zellen_pack auf Pack_<n>, nur wenn der Helfer da ist und die Option kennt.
+ * Fehler werden nur gemeldet; der Aufrufer navigiert danach trotzdem (E6: navigate kann keinen Parameter mitgeben).
+ */
+export async function selectPack(hass: Hass | undefined, n: number): Promise<void> {
+  const option = `Pack_${n}`;
+  try {
+    const helper = stateOf(hass, ZELLEN_PACK);
+    const options = helper?.attributes?.options;
+    if (helper && hass?.callService && (!Array.isArray(options) || options.includes(option))) {
+      await hass.callService('input_select', 'select_option', { entity_id: ZELLEN_PACK, option });
+    } else {
+      console.warn(`pack-card: ${ZELLEN_PACK} nicht verfügbar oder ohne Option ${option}`);
+    }
+  } catch (e) {
+    console.warn(`pack-card: ${ZELLEN_PACK} nicht gesetzt`, e);
+  }
+}
+
+/** Senkrechte Batterie mit SoC-Fuellung (Bank-Display E16, Packansicht E19); Groesse setzt das CSS des Aufrufers. */
+export function battSvg(soc: number | undefined): TemplateResult {
+  const fillH = ((soc === undefined ? 0 : Math.max(0, Math.min(100, soc))) / 100) * 86;
+  return html`<svg viewBox="0 0 58 108" role="img" aria-label=${`SoC ${fmt(soc, 1)} Prozent`}>
+    <rect x="20" y="1" width="18" height="7" rx="2" fill="var(--pc-fg3)"></rect>
+    <rect x="3" y="8" width="52" height="98" rx="7" fill="var(--pc-card)" stroke="var(--pc-fg3)" stroke-width="2"></rect>
+    <rect x="9" y=${14 + 86 - fillH} width="40" height=${fillH} rx="3" fill=${socColor(soc)}></rect>
+    ${[25, 50, 75].map((q) => {
+      const y = 14 + 86 - (q / 100) * 86;
+      return html`<line x1="9" x2="49" y1=${y} y2=${y} stroke="var(--pc-card)" stroke-width="1.5"></line>`;
+    })}
+  </svg>`;
 }
 
 /** Sichtbarer Rueckfall eines Bausteins (E10). */
@@ -227,5 +263,106 @@ export const sharedStyles = css`
   .grp .gs {
     color: var(--pc-fg3);
     text-align: center;
+  }
+`;
+
+/**
+ * Schalter der Packansicht (E19, E12: ohne Ein-/Aus-Beschriftung, der Knopf zeigt den Zustand). Gemeinsam fuer den
+ * Tippschalter und den Halteknopf in Schalterform. Unter 640 px Containerbreite Bezeichnung ueber dem Knopf,
+ * damit die fuenf Schalter auch auf dem Handy in einer Zeile bleiben.
+ */
+export const switchStyles = css`
+  .sw {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--pc-line);
+    border-radius: 8px;
+    padding: 5px 8px;
+    background: var(--pc-card);
+    color: var(--pc-fg);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .sw:hover:not(:disabled) {
+    border-color: var(--pc-fg3);
+  }
+  .sw:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .sw:focus-visible {
+    outline: 2px solid var(--pc-accent);
+    outline-offset: 1px;
+  }
+  .sw .lbl {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    line-height: 1.25;
+  }
+  .sw .lbl > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sw .lbl small {
+    font-size: 10px;
+    color: var(--pc-fg3);
+    white-space: nowrap;
+  }
+  .sw .knob {
+    position: relative;
+    flex: none;
+    width: 30px;
+    height: 17px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--pc-fg3) 45%, transparent);
+  }
+  .sw .knob::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--pc-card);
+    transition: left 0.15s;
+  }
+  .sw[aria-checked='true'] .knob {
+    background: var(--pc-accent);
+  }
+  .sw[aria-checked='true'] .knob::after {
+    left: 15px;
+  }
+  @container (max-width: 639px) {
+    .sw {
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 5px 3px;
+      font-size: 11.5px;
+      text-align: center;
+    }
+    .sw .lbl {
+      justify-items: center;
+      max-width: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sw .knob::after {
+      transition: none;
+    }
   }
 `;

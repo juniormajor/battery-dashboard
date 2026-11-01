@@ -56,6 +56,25 @@ export function uptimeText(sec: number | undefined): string {
   return `${m} min`;
 }
 
+/** Restzeit als m:ss, ab einer Stunde h:mm:ss (Notbetrieb-Restzeit). */
+export function clock(sec: number | undefined): string {
+  if (sec === undefined || !Number.isFinite(sec) || sec < 0) return DASH;
+  const s = Math.round(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}:${pad2(m)}:${pad2(s % 60)}` : `${m}:${pad2(s % 60)}`;
+}
+
+/** Ganze Zahl (Zaehler), fehlend „–“. */
+export function count(x: number | undefined): string {
+  return x === undefined || !Number.isFinite(x) ? DASH : String(Math.round(x));
+}
+
+/** Zelle als Pack:Zelle, zweistellig (E20): „05:02“ ist Zelle 02 in Pack_5. */
+export function packCell(pack: number, cell: number): string {
+  return `${pad2(pack)}:${pad2(cell)}`;
+}
+
 /** Kennung der Extremzelle am GX „MM::CC“ als „MM:CC“ mit roher Modulnummer (E20); anderes roh. */
 export function cellId(raw: string | undefined): string {
   if (!raw) return DASH;

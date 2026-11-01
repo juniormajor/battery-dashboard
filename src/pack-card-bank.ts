@@ -3,7 +3,7 @@
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { BANK_MASTER, BANK_SHUNT, Hass, NOMINAL_V, numberOf, secondsOf, stateOf, textOf } from './entities';
 import { DASH, cellId, dhm, fmt, num, snum } from './format';
-import { fallback, group, sharedStyles, socColor, thermo, val } from './ui';
+import { battSvg, fallback, group, sharedStyles, thermo, val } from './ui';
 
 export type CapUnit = 'Ah' | 'kWh';
 
@@ -144,16 +144,7 @@ export class PackCardBank extends LitElement {
       const sohId = `${BANK_MASTER}soh`;
       const soc = numberOf(h, socId);
       const soh = numberOf(h, sohId);
-      const fillH = ((soc === undefined ? 0 : Math.max(0, Math.min(100, soc))) / 100) * 86;
-      const svg = html`<svg viewBox="0 0 58 108" role="img" aria-label=${`SoC ${fmt(soc, 1)} Prozent`}>
-        <rect x="20" y="1" width="18" height="7" rx="2" fill="var(--pc-fg3)"></rect>
-        <rect x="3" y="8" width="52" height="98" rx="7" fill="var(--pc-card)" stroke="var(--pc-fg3)" stroke-width="2"></rect>
-        <rect x="9" y=${14 + 86 - fillH} width="40" height=${fillH} rx="3" fill=${socColor(soc)}></rect>
-        ${[25, 50, 75].map((q) => {
-          const y = 14 + 86 - (q / 100) * 86;
-          return html`<line x1="9" x2="49" y1=${y} y2=${y} stroke="var(--pc-card)" stroke-width="1.5"></line>`;
-        })}
-      </svg>`;
+      const svg = battSvg(soc);
       return html`<div class="batt">
         ${val(this, h, socId, svg)} ${val(this, h, socId, html`<b>SoC ${num(soc, 1, '%')}</b>`)}
         ${val(this, h, sohId, html`<span class="soh">SoH ${num(soh, 0, '%')}</span>`)}
