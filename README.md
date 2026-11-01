@@ -21,6 +21,13 @@ stacks:
     name: Stack 2
 ```
 
+Klickziele (optional): `pack_path` ist die Packansicht (Standard `pack`), `zellen_path` die Zellanalyse (Standard `zellen`), jeweils relativ zum aktuellen Dashboard (`/<dashboard-url>/pack`) oder absolut ab `/`. Ein Klick auf „Pack n“ setzt vorher `input_select.zellen_pack` auf `Pack_<n>`.
+
+```yaml
+pack_path: pack
+zellen_path: zellen
+```
+
 Abweichende Entitäten je Pack:
 
 ```yaml

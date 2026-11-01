@@ -1,0 +1,64 @@
+// Zahlen- und Zeitformate der Karte: Dezimalkomma, Strich fuer fehlende Werte (E10), Zellkennung nach E20.
+
+export const DASH = '–';
+
+const pad2 = (x: number): string => String(Math.floor(x)).padStart(2, '0');
+
+export function fmt(x: number | undefined, d: number): string {
+  if (x === undefined || !Number.isFinite(x)) return DASH;
+  return x.toFixed(d).replace('.', ',');
+}
+
+/** Mit Vorzeichen (+ / −), null ohne Vorzeichen. */
+export function signed(x: number | undefined, d: number): string {
+  if (x === undefined || !Number.isFinite(x)) return DASH;
+  const a = fmt(Math.abs(x), d);
+  if (/^0(,0*)?$/.test(a)) return a;
+  return (x > 0 ? '+' : '−') + a;
+}
+
+const withUnit = (s: string, unit: string): string =>
+  s === DASH || !unit ? s : unit === '%' ? `${s}%` : `${s} ${unit}`;
+
+/** Zahl mit Einheit, fehlend nur „–“. */
+export function num(x: number | undefined, d: number, unit = ''): string {
+  return withUnit(fmt(x, d), unit);
+}
+
+/** Zahl mit Vorzeichen und Einheit, fehlend nur „–“. */
+export function snum(x: number | undefined, d: number, unit = ''): string {
+  return withUnit(signed(x, d), unit);
+}
+
+/** Datenalter: „12 s“, „3:41 min“, „2 h“. */
+export function ageText(s: number | undefined): string {
+  if (s === undefined) return DASH;
+  if (s < 60) return `${Math.round(s)} s`;
+  if (s < 3600) return `${Math.floor(s / 60)}:${pad2(s % 60)} min`;
+  return `${Math.floor(s / 3600)} h`;
+}
+
+/** Restlaufzeit als Tage:Stunden:Minuten (E16). */
+export function dhm(sec: number | undefined): string {
+  if (sec === undefined || !Number.isFinite(sec) || sec < 0) return DASH;
+  const d = Math.floor(sec / 86400);
+  return `${d}:${pad2((sec % 86400) / 3600)}:${pad2((sec % 3600) / 60)}`;
+}
+
+/** Laufzeit des ESP: „3 T 22 h“, „5 h 12 min“, „7 min“. */
+export function uptimeText(sec: number | undefined): string {
+  if (sec === undefined || !Number.isFinite(sec) || sec < 0) return DASH;
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return `${d} T ${h} h`;
+  if (h > 0) return `${h} h ${m} min`;
+  return `${m} min`;
+}
+
+/** Kennung der Extremzelle am GX „MM::CC“ als „MM:CC“ mit roher Modulnummer (E20); anderes roh. */
+export function cellId(raw: string | undefined): string {
+  if (!raw) return DASH;
+  const m = /^(\d+)::(\d+)$/.exec(raw.trim());
+  return m ? `${pad2(Number(m[1]))}:${pad2(Number(m[2]))}` : raw;
+}
