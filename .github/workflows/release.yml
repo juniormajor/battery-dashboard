@@ -1,22 +1,20 @@
-# Baut bei jedem Tag v* und haengt dist/battery-dashboard.js an das Release (A01d E3, E11).
-# Ausloeser: Tag per git push oder ein im Web-UI veroeffentlichtes Release (legt den Tag dort an).
-# Node-Hauptversion gleich der lokalen (22); dist/ wird nicht eingecheckt.
+# Release bei Versionswechsel (A01d E11): Bei jedem Push auf main prueft der Workflow, ob es zur
+# Version aus package.json schon ein Release gibt. Wenn nicht, baut er und legt Tag und Release
+# v<Version> mit dist/battery-dashboard.js an. Tags werden nicht gepusht; ein mit GITHUB_TOKEN
+# angelegter Tag loest keinen weiteren Lauf aus.
 name: release
 
 on:
   push:
-    tags:
-      - 'v*'
-  release:
-    types:
-      - published
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -26,21 +24,30 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Abhaengigkeiten
-        run: npm ci
-
-      - name: Version aus dem Tag
-        run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#v}"
-
-      - name: Bauen
-        run: npm run build
-
-      - name: Release mit battery-dashboard.js
+      - name: Version pruefen
+        id: version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/battery-dashboard.js --clobber
+          tag="v$(node -p "require('./package.json').version")"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag gibt es schon, nichts zu tun."
+            echo "neu=false" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$GITHUB_REF_NAME" dist/battery-dashboard.js --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+            echo "neu=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Abhaengigkeiten
+        if: steps.version.outputs.neu == 'true'
+        run: npm ci
+
+      - name: Bauen
+        if: steps.version.outputs.neu == 'true'
+        run: npm run build
+
+      - name: Tag und Release mit battery-dashboard.js
+        if: steps.version.outputs.neu == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ steps.version.outputs.tag }}" dist/battery-dashboard.js --target "$GITHUB_SHA" --title "${{ steps.version.outputs.tag }}" --generate-notes

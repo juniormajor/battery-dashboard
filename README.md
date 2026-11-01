@@ -44,4 +44,4 @@ npm ci
 npm run build
 ```
 
-Ergebnis: `dist/battery-dashboard.js`. Ein Tag `v*` baut in GitHub Actions und hängt die Datei an das Release.
+Ergebnis: `dist/battery-dashboard.js`. Releases entstehen in GitHub Actions: Erhöht ein Push auf `main` die Version in `package.json`, legt der Workflow Tag und Release `v<Version>` mit der Datei an.
