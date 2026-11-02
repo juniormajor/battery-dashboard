@@ -2,8 +2,8 @@
 // BLE-Pegel, hoechste Temperatur mit Fuehler (E21, A01e), Toenung nach ΔU, Extremzellen und Balancer-Zellen.
 import { css, html, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, ageSeconds, numberOf, packEntity, stackEntity, stackOf, stateOf, unitOf } from './entities';
-import { ageText, snum } from './format';
-import { val } from './ui';
+import { CapUnit, ageText, capText, snum } from './format';
+import { GroupLine, val } from './ui';
 
 export const CELLS = 16;
 
@@ -77,6 +77,23 @@ export function bleInfo(node: EventTarget, hass: Hass | undefined, p: PackConfig
     ><span class="dot ${fresh ? '' : 'off'}"></span>${val(node, hass, rssiId, snum(numberOf(hass, rssiId), 0, 'dBm'))} ·
     ${val(node, hass, packEntity(p, 'sensor', 'total_runtime'), ageText(age))}</span
   >`;
+}
+
+/**
+ * „Kapazität: Rest (voll)“ je Pack wie im Bank-Display (E16): capacity_remaining und full_charge_capacity des BMS,
+ * in der dort gewaehlten Einheit; jeder Wert oeffnet seine Entitaet.
+ */
+export function capLine(node: EventTarget, hass: Hass | undefined, p: PackConfig, unit: CapUnit): GroupLine {
+  const rem = packEntity(p, 'sensor', 'capacity_remaining');
+  const full = packEntity(p, 'sensor', 'full_charge_capacity');
+  return {
+    k: 'Kapazität:',
+    v: [
+      html`<span class="nw"
+        >${val(node, hass, rem, capText(numberOf(hass, rem), unit))} ${val(node, hass, full, `(${capText(numberOf(hass, full), unit)})`)}</span
+      >`,
+    ],
+  };
 }
 
 /** Zellnummer aus einem Zahlensensor (min_voltage_cell, max_voltage_cell melden z. B. 8.0), nur 1 bis 16. */

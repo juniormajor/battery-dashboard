@@ -3,11 +3,11 @@
 // „Emergency“ (E7, eigenes Element); rechts der BMS-Master-Block (E21). Einzige Rechnung: Rest = installierte
 // Kapazitaet des Masters minus entnommene Ah des Shunts, gezeigt als „Kapazität: Rest (installiert)“.
 import { LitElement, html, css, TemplateResult } from 'lit';
-import { BANK_MASTER, BANK_SHUNT, Hass, NOMINAL_V, PackConfig, numberOf, secondsOf, stateOf, textOf } from './entities';
-import { DASH, cellId, dhm, fmt, gxPack, num, snum } from './format';
+import { BANK_MASTER, BANK_SHUNT, Hass, PackConfig, numberOf, secondsOf, stateOf, textOf } from './entities';
+import { CapUnit, DASH, capText, cellId, dhm, gxPack, num, snum } from './format';
 import { battSvg, fallback, group, sharedStyles, tempLabel, val } from './ui';
 
-export type CapUnit = 'Ah' | 'kWh';
+export type { CapUnit } from './format';
 
 /**
  * Alarme des BMS-Masters (enum no_alarm / warning / alarm), live gelesen an der Alt-Instanz am 2026-11-01.
@@ -182,10 +182,8 @@ export class PackCardBank extends LitElement {
     }
   }
 
-  /** Kapazitaet in der gewaehlten Einheit mit Einheit, fehlend „–“. */
   private cap(ah: number | undefined): string {
-    if (ah === undefined) return DASH;
-    return `${this.unit === 'kWh' ? fmt((ah * NOMINAL_V) / 1000, 1) : fmt(ah, 0)} ${this.unit}`;
+    return capText(ah, this.unit);
   }
 
   private renderShunt(): TemplateResult {

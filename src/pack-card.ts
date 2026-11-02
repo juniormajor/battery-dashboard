@@ -241,6 +241,7 @@ export class PackCard extends LitElement {
             .packs=${this._packs}
             .stacks=${this._stacks}
             .now=${this._now}
+            .unit=${this._unit}
             .speicherPath=${this._speicherPath}
             .zellenPath=${this._zellenPath}
           ></pack-card-pack>
@@ -330,6 +331,7 @@ export class PackCard extends LitElement {
                       .pack=${p}
                       .frame=${frames.get(p.pack) ?? ''}
                       .now=${this._now}
+                      .unit=${this._unit}
                       .packPath=${this._packPath}
                     ></pack-card-tile>`,
                 )

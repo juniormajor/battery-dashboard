@@ -30,6 +30,10 @@ export interface Hass {
     data?: Record<string, unknown>,
     target?: Record<string, unknown>,
   ) => Promise<unknown>;
+  /** Entity-Registry des Frontends (EntityRegistryDisplayEntry): Geraet einer Entitaet fuer Links auf die Geraeteseite */
+  entities?: Record<string, { device_id?: string } | undefined>;
+  /** angemeldeter Benutzer; die Geraeteseite unter /config ist nur fuer Admins erreichbar */
+  user?: { is_admin?: boolean };
   /** WebSocket-Befehl ueber die Verbindung des Frontends (Drift: recorder/statistics_during_period, A01c E6) */
   callWS?: <T>(msg: Record<string, unknown>) => Promise<T>;
 }
@@ -89,6 +93,15 @@ export function textOf(hass: Hass | undefined, entityId: string): string | undef
 export function isAvailable(hass: Hass | undefined, entityId: string): boolean {
   const s = hass?.states[entityId];
   return !!s && s.state !== 'unavailable';
+}
+
+/** Geraete-ID der ersten Entitaet mit Geraet aus der Registry des Frontends, sonst undefined. */
+export function deviceOf(hass: Hass | undefined, entityIds: string[]): string | undefined {
+  for (const id of entityIds) {
+    const d = hass?.entities?.[id]?.device_id;
+    if (d) return d;
+  }
+  return undefined;
 }
 
 export function exists(hass: Hass | undefined, entityId: string): boolean {

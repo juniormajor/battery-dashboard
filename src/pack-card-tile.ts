@@ -1,11 +1,12 @@
 // Gehaeuse eines Packs (A01d E17, E21) nach dem realen Pack im PV-Raum. Eigenes Element, damit ein Fehler auf dieses
 // Pack begrenzt bleibt (E10, R6). Oben in der Mitte das Typenschild „Pack n“ (Klickziel E4), rechts BLE-Pegel und
 // Datenalter; darunter links die SoC-Batterie mit SoC und SoH, rechts der Bildschirm im Rahmen mit Fehlertext (E8),
-// „U / I / P“, „ΔU / I Bal“ und der hoechsten Temperatur mit Fuehler; unten Polkappen und Lampen RUN/ALM/BAL/EMG.
+// „U / I / P“, „Kapazität“ (Rest und volle Kapazitaet in der Einheit des Bank-Displays), „ΔU / I Bal“ und der
+// hoechsten Temperatur mit Fuehler; unten Polkappen und Lampen RUN/ALM/BAL/EMG.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, ZELLEN_PACK, ageSeconds, numberOf, packEntity, stateOf, textOf } from './entities';
-import { DASH, num, snum } from './format';
-import { band, bleInfo, caseStyles, deltaMv, maxTemp, packAge, packLeds, packPartStyles, caseBottom } from './pack-parts';
+import { CapUnit, DASH, num, snum } from './format';
+import { band, bleInfo, capLine, caseStyles, deltaMv, maxTemp, packAge, packLeds, packPartStyles, caseBottom } from './pack-parts';
 import { battSvg, fallback, group, navigate, selectPack, sharedStyles, tempLabel, val, viewPath } from './ui';
 
 export type SocFrame = '' | 'lo' | 'hi';
@@ -23,6 +24,7 @@ export class PackCardTile extends LitElement {
     pack: { attribute: false },
     frame: {},
     now: { type: Number },
+    unit: {},
     packPath: {},
   };
 
@@ -31,6 +33,8 @@ export class PackCardTile extends LitElement {
   frame: SocFrame = '';
   /** Zeitpunkt fuer das Datenalter, vom Rahmen getaktet */
   now = 0;
+  /** Einheit der Kapazitaet wie im Bank-Display (Ah/kWh, gemerkt je Browser) */
+  unit: CapUnit = 'Ah';
   /** Pfad der Packansicht (Kartenkonfiguration pack_path) */
   packPath = 'pack';
 
@@ -196,6 +200,7 @@ export class PackCardTile extends LitElement {
             val(this, h, E('power'), snum(numberOf(h, E('power')), 0, 'W')),
           ],
         },
+        capLine(this, h, p, this.unit),
         {
           k: 'ΔU / I Bal:',
           v: [

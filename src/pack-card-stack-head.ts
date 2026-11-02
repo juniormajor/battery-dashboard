@@ -1,10 +1,11 @@
 // Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur mit Thermometer und „ESP“, WLAN) und in
 // derselben Zeile „ESP reboot“ mit einer Sekunde Halten (E7); die Laufzeit des ESP steht im Hinweis des Knopfs.
+// Der Name fuehrt Admins auf die Geraeteseite des ESP in HA (/config/devices/device/<id>, Geraet aus der Registry).
 // Diagnose-IDs ohne Bereichspraefix nach A01b E15.
 import { LitElement, html, css, TemplateResult } from 'lit';
-import { Hass, StackConfig, isAvailable, numberOf, secondsOf, stackDiagEntity, stackEntity } from './entities';
+import { Hass, StackConfig, deviceOf, isAvailable, numberOf, secondsOf, stackDiagEntity, stackEntity } from './entities';
 import { num, snum, uptimeText } from './format';
-import { fallback, sharedStyles, tempLabel, val } from './ui';
+import { fallback, navigate, sharedStyles, tempLabel, val } from './ui';
 
 export class PackCardStackHead extends LitElement {
   static properties = {
@@ -33,6 +34,9 @@ export class PackCardStackHead extends LitElement {
       }
       .name {
         font-weight: 500;
+        font-size: 15px;
+      }
+      .name.link {
         font-size: 15px;
       }
       .esp {
@@ -82,7 +86,7 @@ export class PackCardStackHead extends LitElement {
       const restart = stackEntity(s, null, 'button', 'restart');
       const canPress = isAvailable(h, restart) && typeof h?.callService === 'function';
       return html`<div class="h">
-        <span class="name">${st.name ?? `Stack ${s}`}</span>
+        ${this.renderName(st.name ?? `Stack ${s}`, [up, restart, temp, wifi])}
         <span class="esp">
           <span>${tempLabel('ESP', false)} ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
           <span>WLAN ${val(this, h, wifi, snum(numberOf(h, wifi), 0, 'dBm'))}</span>
@@ -101,6 +105,20 @@ export class PackCardStackHead extends LitElement {
     } catch (e) {
       return fallback(`Stack ${this.stack?.stack ?? '?'}`, e);
     }
+  }
+
+  /** Stackname als Link auf die Geraeteseite des ESP, nur fuer Admins und wenn die Registry das Geraet kennt. */
+  private renderName(name: string, ids: string[]): TemplateResult {
+    const dev = deviceOf(this.hass, ids);
+    if (!dev || !this.hass?.user?.is_admin) return html`<span class="name">${name}</span>`;
+    return html`<button
+      type="button"
+      class="link name"
+      title="Geräteseite des ESP in Home Assistant"
+      @click=${() => navigate(`/config/devices/device/${dev}`)}
+    >
+      ${name}
+    </button>`;
   }
 
   private _restart = (): void => {

@@ -1,6 +1,17 @@
 // Zahlen- und Zeitformate der Karte: Dezimalkomma, Strich fuer fehlende Werte (E10), Zellkennung nach E20.
 
+import { NOMINAL_V } from './entities';
+
 export const DASH = '–';
+
+export type CapUnit = 'Ah' | 'kWh';
+
+
+/** Kapazitaet in der gewaehlten Einheit mit Einheit (Ah ganzzahlig, kWh mit einer Stelle), fehlend „–“. */
+export function capText(ah: number | undefined, unit: CapUnit): string {
+  if (ah === undefined || !Number.isFinite(ah)) return '–';
+  return unit === 'kWh' ? `${((ah * NOMINAL_V) / 1000).toFixed(1).replace('.', ',')} kWh` : `${Math.round(ah)} Ah`;
+}
 
 const pad2 = (x: number): string => String(Math.floor(x)).padStart(2, '0');
 

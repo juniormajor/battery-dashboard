@@ -6,8 +6,8 @@
 // Jeder Block in eigenem try/catch mit sichtbarem Rueckfall (E10), Zustaende nur ueber die Guards aus entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
-import { DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
-import { band, balancerState, bleInfo, caseStyles, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, caseBottom, CELLS } from './pack-parts';
+import { CapUnit, DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
+import { band, balancerState, bleInfo, capLine, caseStyles, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, caseBottom, CELLS } from './pack-parts';
 import { battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, tempLabel, val, viewPath } from './ui';
 
 interface SwitchDef {
@@ -52,6 +52,7 @@ export class PackCardPack extends LitElement {
     packs: { attribute: false },
     stacks: { attribute: false },
     now: { type: Number },
+    unit: {},
     speicherPath: {},
     zellenPath: {},
   };
@@ -60,6 +61,8 @@ export class PackCardPack extends LitElement {
   packs: PackConfig[] = [];
   stacks: StackConfig[] = [];
   now = 0;
+  /** Einheit der Kapazitaet wie im Bank-Display */
+  unit: CapUnit = 'Ah';
   speicherPath = 'speicher';
   zellenPath = 'zellen';
 
@@ -182,7 +185,7 @@ export class PackCardPack extends LitElement {
       .diag {
         display: flex;
         flex-wrap: wrap;
-        gap: 2px 16px;
+        gap: 2px 14px;
         font-size: 12.5px;
         color: var(--pc-fg2);
         padding: 6px 10px;
@@ -484,6 +487,7 @@ export class PackCardPack extends LitElement {
           val(this, h, E('power'), snum(numberOf(h, E('power')), 0, 'W')),
         ],
       },
+      capLine(this, h, p, this.unit),
       { k: 'Ladephase:', v: [val(this, h, E('charge_status'), textOf(h, E('charge_status')) ?? DASH)], span: true },
       {
         k: 'Zyklen / Durchsatz:',
@@ -511,7 +515,10 @@ export class PackCardPack extends LitElement {
     </article>`;
   }
 
-  /** BLE-Diagnose (Entity-Ableitung): fehlende Entitaeten werden uebersprungen, damit neue nach einem Flash ohne Nacharbeit erscheinen (E10). */
+  /**
+   * BLE-Zeile (Entity-Ableitung): kurze Bezeichnungen in einer Zeile, die ausfuehrliche Bedeutung im title; fehlende
+   * Entitaeten werden uebersprungen, damit neue nach einem Flash ohne Nacharbeit erscheinen (E10).
+   */
   private renderDiag(p: PackConfig): TemplateResult {
     const h = this.hass;
     const E = (key: string) => packEntity(p, 'sensor', key);
@@ -519,32 +526,22 @@ export class PackCardPack extends LitElement {
     const add = (label: string, id: string, text: string, title = '') => {
       if (exists(h, id)) items.push(html`<span title=${title}>${label} ${val(this, h, id, text)}</span>`);
     };
-    add(
-      'Letzter Aufbau',
-      E('ble_reconnect_duration'),
-      ageText(secondsOf(h, E('ble_reconnect_duration'))),
-      'Dauer des letzten BLE-Wiederaufbaus',
-    );
-    add(
-      'Watchdog-Eingriffe',
-      E('ble_watchdog_fixes'),
-      count(numberOf(h, E('ble_watchdog_fixes'))),
-      'Eingriffe von Ebene 1 seit dem Boot des ESP',
-    );
+    add('Aufbau', E('ble_reconnect_duration'), ageText(secondsOf(h, E('ble_reconnect_duration'))), 'Dauer des letzten BLE-Wiederaufbaus');
+    add('Watchdog', E('ble_watchdog_fixes'), count(numberOf(h, E('ble_watchdog_fixes'))), 'Eingriffe von Ebene 1 seit dem Boot des ESP');
     const fs = numberOf(h, E('ble_last_fix_state'));
     add(
-      'Letzter Eingriff',
+      'Eingriff',
       E('ble_last_fix_state'),
       fs === undefined ? DASH : (FIX_STATES[Math.round(fs)] ?? String(Math.round(fs))),
       'Client-Zustand beim letzten Eingriff von Ebene 1',
     );
     add('Keepalive', E('ble_keepalive'), count(numberOf(h, E('ble_keepalive'))), 'Keepalive-Befehle 0x96 seit dem Boot des ESP');
     const rtf = textOf(h, E('total_runtime_formatted'));
-    if (rtf !== undefined || !exists(h, E('total_runtime'))) add('BMS-Laufzeit', E('total_runtime_formatted'), rtf ?? DASH);
-    else add('BMS-Laufzeit', E('total_runtime'), uptimeText(secondsOf(h, E('total_runtime'))));
-    add('BMS-Einschaltungen', E('power_on_count'), count(numberOf(h, E('power_on_count'))));
+    if (rtf !== undefined || !exists(h, E('total_runtime'))) add('BMS', E('total_runtime_formatted'), rtf ?? DASH, 'Laufzeit des BMS');
+    else add('BMS', E('total_runtime'), uptimeText(secondsOf(h, E('total_runtime'))), 'Laufzeit des BMS');
+    add('Starts', E('power_on_count'), count(numberOf(h, E('power_on_count'))), 'Einschaltungen des BMS');
     return html`<div class="diag" aria-label="BLE-Diagnose">
-      <b>BLE-Diagnose</b>${items.length ? items : html`<span>keine Diagnosewerte</span>`}
+      <b>BLE</b>${items.length ? items : html`<span>keine Diagnosewerte</span>`}
     </div>`;
   }
 
