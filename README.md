@@ -31,6 +31,8 @@ speicher_path: speicher
 
 Die Ansicht `pack` zeigt das Pack aus `input_select.zellen_pack` (`Pack_<n>`); fehlt der Helfer oder ist der Wert kein konfiguriertes Pack, das erste Pack aus `packs`. Vor- und Zurückblättern setzt nur den Helfer. Laden, Entladen und Bluetooth schalten mit einfachem Tippen ein, aber nur nach einer Sekunde Halten aus; Notbetrieb und BMS-Neustart verlangen in beide Richtungen eine Sekunde Halten.
 
+Die Ansicht `zellen` zeigt die Zellauswertung aus den `sql`-Sensoren `sensor.zellen_pack_<n>` und `sensor.zellen_status` (Werte als Attribute): oben die Filter `input_select.zellen_zeitraum`, `input_select.zellen_zustand` und `input_number.zellen_mindestspreizung` mit dem Zeitpunkt der letzten Berechnung und „Neu berechnen“ (`homeassistant.update_entity` auf die Sensoren), darunter die Kennzahlen des gewählten Packs, die Matrizen „Abweichung vom Packmittel“ und „Anteil am Extrem im Pack“ über alle Zellen und die Drift der Leitzellen. Die Drift holt die Karte als Tageswerte aus der Langzeitstatistik von `sensor.zellen_drift_pack_<n>_hoch` und `_tief` (WebSocket `recorder/statistics_during_period`, `period: day`, `mean`) und zeichnet sie als Stufen. Ein Klick auf eine Packzeile setzt `input_select.zellen_pack`. Unter 600 px Breite stehen die Zellen 1–8 und 9–16 in zwei Matrizen untereinander.
+
 Abweichende Entitäten je Pack:
 
 ```yaml

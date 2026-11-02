@@ -30,6 +30,8 @@ export interface Hass {
     data?: Record<string, unknown>,
     target?: Record<string, unknown>,
   ) => Promise<unknown>;
+  /** WebSocket-Befehl ueber die Verbindung des Frontends (Drift: recorder/statistics_during_period, A01c E6) */
+  callWS?: <T>(msg: Record<string, unknown>) => Promise<T>;
 }
 
 export const BANK_SHUNT = 'sensor.victron_mqtt_battery_279_battery_';

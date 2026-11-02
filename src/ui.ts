@@ -133,6 +133,7 @@ export const themeVars = css`
     --pc-warn: var(--pack-card-warn-color, #c46f00);
     --pc-bad: var(--pack-card-bad-color, #c62828);
     --pc-bal: var(--pack-card-bal-color, #00838f);
+    --pc-low: var(--pack-card-low-color, #1f63b8);
   }
   :host([dark]) {
     --pc-ok: var(--pack-card-ok-color-dark, #5cc68b);
@@ -140,6 +141,7 @@ export const themeVars = css`
     --pc-warn: var(--pack-card-warn-color-dark, #f2a33c);
     --pc-bad: var(--pack-card-bad-color-dark, #f06663);
     --pc-bal: var(--pack-card-bal-color-dark, #3fd2de);
+    --pc-low: var(--pack-card-low-color-dark, #6aa9f2);
   }
 `;
 

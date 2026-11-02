@@ -1,6 +1,7 @@
 // Rahmen der Karte (A01d E1, E2): eine Instanz je Ansicht, konfiguriert werden packs, stacks und die Klickziele.
 // Ansicht speicher: Kopf (Ah/kWh, Zellanalyse), Bank-Display (E16), zentraler Notbetrieb (E7), Schrank (E17), Legende.
 // Ansicht pack: ein Pack aus input_select.zellen_pack (E5, E19), gezeichnet von pack-card-pack.
+// Ansicht zellen: Zellanalyse (E18) aus den sql-Sensoren der Zellauswertung (A01c), gezeichnet von pack-card-zellen.
 import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
@@ -187,7 +188,7 @@ export class PackCard extends LitElement {
   }
 
   getCardSize(): number {
-    return this._view === 'pack' ? 12 : 2 + this._packs.length;
+    return this._view === 'pack' ? 12 : this._view === 'zellen' ? 14 : 2 + this._packs.length;
   }
 
   getGridOptions() {
@@ -236,8 +237,19 @@ export class PackCard extends LitElement {
         return html`<ha-card>${fallback('Ansicht pack', e)}</ha-card>`;
       }
     }
-    if (this._view !== 'speicher') {
-      return html`<ha-card><div class="hint">Ansicht ${this._view} folgt (A01d).</div></ha-card>`;
+    if (this._view === 'zellen') {
+      try {
+        return html`<ha-card>
+          <pack-card-zellen
+            .hass=${this.hass}
+            .packs=${this._packs}
+            .speicherPath=${this._speicherPath}
+            .packPath=${this._packPath}
+          ></pack-card-zellen>
+        </ha-card>`;
+      } catch (e) {
+        return html`<ha-card>${fallback('Ansicht zellen', e)}</ha-card>`;
+      }
     }
     try {
       return html`<ha-card>
