@@ -56,3 +56,15 @@ npm run build
 ```
 
 Ergebnis: `dist/battery-dashboard.js`. Releases entstehen in GitHub Actions: Erhöht ein Push auf `main` die Version in `package.json`, legt der Workflow Tag und Release `v<Version>` mit der Datei an.
+
+## Rendertest
+
+`test/render/` zeichnet die Karte ohne Home Assistant in Chromium (Playwright) mit einem nachgebildeten `hass` aus Live-Werten (`mock.js`, Stand 2026-11-02):
+
+```
+npm run build
+NODE_PATH=$(npm root -g) node test/render/shot.cjs /tmp/render "speicher=view=speicher@1500" "speicher-handy=view=speicher&unit=kWh@390" "pack=view=pack&bal=1@1500" "pack-dunkel=view=pack&dark=1&pack=5@390"
+NODE_PATH=$(npm root -g) node test/render/hold.cjs
+```
+
+`shot.cjs` legt je Variante ein PNG ab und meldet Konsolenfehler und waagrechtes Überlaufen; die Varianten wählt die Query (`view`, `dark=1`, `unit=kWh`, `pack=<n>`, Balancing `bal=<n>`, Fehlertext `err=<n>`, Emergency `em=<n>`, ohne Daten `off=<n>`, Nicht-Admin `admin=0`). `hold.cjs` hält Emergency und ESP reboot bei häufigen `hass`-Updates und gibt die Füllung des Knopfs aus. Playwright muss mit Chromium installiert sein (global oder `npm i --no-save playwright && npx playwright install chromium`).

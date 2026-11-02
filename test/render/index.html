@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --primary-text-color: #141414;
+    --secondary-text-color: #5e5e5e;
+    --divider-color: rgba(0, 0, 0, 0.12);
+    --card-background-color: #ffffff;
+    --secondary-background-color: #f2f2f2;
+    --primary-color: #03a9f4;
+    --text-primary-color: #fff;
+    --primary-background-color: #fafafa;
+  }
+  body.dark {
+    --primary-text-color: #e1e1e1;
+    --secondary-text-color: #9b9b9b;
+    --divider-color: rgba(225, 225, 225, 0.12);
+    --card-background-color: #1c1c1c;
+    --secondary-background-color: #282828;
+    --primary-color: #03a9f4;
+    --primary-background-color: #111111;
+  }
+  body {
+    margin: 0;
+    background: var(--primary-background-color);
+    font-family: Roboto, 'Segoe UI', Arial, sans-serif;
+    color: var(--primary-text-color);
+  }
+  .panel {
+    padding: 4px;
+  }
+</style>
+<script>
+  if (new URLSearchParams(location.search).get('dark') === '1') document.documentElement.classList.add('dark');
+  try { localStorage.setItem('pack-card-unit', new URLSearchParams(location.search).get('unit') || 'Ah'); } catch (e) {}
+</script>
+<script src="mock.js"></script>
+<script>
+  customElements.define(
+    'ha-card',
+    class extends HTMLElement {
+      constructor() {
+        super();
+        const r = this.attachShadow({ mode: 'open' });
+        r.innerHTML =
+          '<style>:host{display:block;background:var(--ha-card-background,var(--card-background-color));border-radius:12px;border:1px solid var(--divider-color);}</style><slot></slot>';
+      }
+    },
+  );
+</script>
+<script type="module" src="battery-dashboard.js"></script>
+</head>
+<body>
+  <div class="panel" id="panel"></div>
+  <script type="module">
+    if (new URLSearchParams(location.search).get('dark') === '1') document.body.classList.add('dark');
+    await customElements.whenDefined('pack-card');
+    const q = new URLSearchParams(location.search);
+    const el = document.createElement('pack-card');
+    el.setConfig({
+      type: 'custom:pack-card',
+      view: q.get('view') || 'speicher',
+      packs: [1, 2, 3, 4, 5, 6],
+      stacks: [
+        { stack: 1, name: 'Stack 1' },
+        { stack: 2, name: 'Stack 2' },
+      ],
+    });
+    el.hass = window.mockHass;
+    document.getElementById('panel').appendChild(el);
+    window.__ready = true;
+  </script>
+</body>
+</html>
