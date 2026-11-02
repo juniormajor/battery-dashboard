@@ -169,7 +169,7 @@ export class PackCard extends LitElement {
       }
       @media (max-width: 520px) {
         ha-card {
-          padding: 10px;
+          padding: 8px;
         }
         .packs {
           padding: 10px 6px 10px 10px;

@@ -1,5 +1,5 @@
 // Zellblock der Packansicht (A01d E19): 16 Zellen in zwei Spalten (1–8 links, 9–16 rechts wie jk-bms-card), je Zelle
-// „Nr Spannung / Innenwiderstand“ ohne Kopfzeile, hoechste Zelle gruen, niedrigste rot umrandet, Hintergrund nach
+// „Nr Spannung / Innenwiderstand“ ohne Ueberschrift und Kopfzeile, Zellrahmen so breit wie ihr Inhalt, mittig, hoechste Zelle gruen, niedrigste rot umrandet, Hintergrund nach
 // Abweichung vom Packmittel (Mockup devClass). Bei Balancing-Strom ungleich 0 der Stromfluss von der hoechsten zur
 // niedrigsten Zelle als SVG ueber dem Raster (jk-bms-card _updateFlowLine): Leitung, wandernde Punkte in Flussrichtung
 // und Pfeil an der Zielzelle; die Zellen des Balancers pulsierend markiert. Ohne Begleitzeile zu Minimum, Maximum und
@@ -45,17 +45,13 @@ export class PackCardCells extends LitElement {
         display: grid;
         gap: 6px;
       }
-      .title {
-        font-size: 11.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--pc-fg3);
-      }
+      /* Zellrahmen so breit wie ihr Inhalt, beide Spalten mittig; die Fuge traegt den Balancing-Fluss */
       .grid {
         position: relative;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        column-gap: 30px;
+        grid-template-columns: repeat(2, minmax(0, max-content));
+        justify-content: center;
+        column-gap: 48px;
         row-gap: 3px;
       }
       .cell {
@@ -163,7 +159,7 @@ export class PackCardCells extends LitElement {
           padding: 6px 6px 8px;
         }
         .grid {
-          column-gap: 16px;
+          column-gap: 22px;
           row-gap: 2px;
         }
         .cell {
@@ -278,7 +274,6 @@ export class PackCardCells extends LitElement {
     const half = CELLS / 2;
     for (let i = 1; i <= half; i++) rows.push(cell(i), cell(i + half));
     return html`<section class="box" aria-label=${`Zellen Pack ${n}`}>
-      <div class="title">Zellen</div>
       <div class="grid">
         ${rows}
         ${

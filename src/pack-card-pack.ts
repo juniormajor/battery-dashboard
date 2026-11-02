@@ -2,7 +2,7 @@
 // Kopf mit Ruecklink, Name, Master-Abzeichen, Stack, Emergency-Restzeit, Fehlertext (E8), Zellanalyse und Packwechsel;
 // fuenf Schalter in einer Zeile (E12); Gehaeuse mit Lampen, Typenschild, BLE-Pegel und Datenalter, SoC-Batterie und
 // Bildschirm mit den Werten in zwei Bloecken (E21), unten Polkappen; Zellblock (eigenes Element); BLE-Diagnose;
-// unten Emergency und BMS-Neustart mit einer Sekunde Halten (E7).
+// unten Emergency und Pack reboot (BMS-Neustart) mit einer Sekunde Halten (E7).
 // Jeder Block in eigenem try/catch mit sichtbarem Rueckfall (E10), Zustaende nur ueber die Guards aus entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
@@ -152,15 +152,16 @@ export class PackCardPack extends LitElement {
       .case-mid {
         gap: 16px;
       }
+      /* Batterie wie im Bank-Display frueher (58 px), damit der Bildschirm ohne Leerraum darueber und darunter steht */
       .soc {
-        width: 104px;
+        width: 76px;
       }
       .soc svg {
-        width: 88px;
-        height: 164px;
+        width: 58px;
+        height: 90px;
       }
       .soc b {
-        font-size: 16px;
+        font-size: 14px;
       }
       .soc .soh {
         font-size: 11.5px;
@@ -224,8 +225,8 @@ export class PackCardPack extends LitElement {
           width: 62px;
         }
         .soc svg {
-          width: 50px;
-          height: 93px;
+          width: 46px;
+          height: 71px;
         }
         .soc b {
           font-size: 12px;
@@ -569,7 +570,8 @@ export class PackCardPack extends LitElement {
       ></pack-card-hold>
       <pack-card-hold
         class="rs"
-        .label=${master ? 'BMS neu starten (Master!)' : 'BMS neu starten'}
+        plain
+        .label=${master ? 'Pack reboot (Master!)' : 'Pack reboot'}
         .disabled=${!!rsReason}
         .reason=${rsReason}
         tone="bad"

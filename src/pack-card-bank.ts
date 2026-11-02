@@ -1,9 +1,10 @@
-// Bank-Display (A01d E16): SoC des Shunts als senkrechte Batterie mit SoH, daneben Shunt- und BMS-Master-Block (E21),
-// unter dem Shunt-Block der zentrale Knopf „Emergency“ (E7, eigenes Element). Einzige Rechnung: Rest = installierte
+// Bank-Display (A01d E16): zwei gleich breite Haelften wie die Stacks darunter. Links die SoC-Batterie des Shunts wie
+// in den Gehaeusen (gleiche Breite, SoC und SoH darunter), daneben der Shunt-Block und darunter der zentrale Knopf
+// „Emergency“ (E7, eigenes Element); rechts der BMS-Master-Block (E21). Einzige Rechnung: Rest = installierte
 // Kapazitaet des Masters minus entnommene Ah des Shunts, gezeigt als „Kapazität: Rest (installiert)“.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { BANK_MASTER, BANK_SHUNT, Hass, NOMINAL_V, PackConfig, numberOf, secondsOf, stateOf, textOf } from './entities';
-import { DASH, cellId, dhm, fmt, num, snum } from './format';
+import { DASH, cellId, dhm, fmt, gxPack, num, snum } from './format';
 import { battSvg, fallback, group, sharedStyles, tempLabel, val } from './ui';
 
 export type CapUnit = 'Ah' | 'kWh';
@@ -55,101 +56,94 @@ export class PackCardBank extends LitElement {
       .wrap {
         container-type: inline-size;
       }
+      /* zwei gleich breite Haelften, Abstand wie zwischen den Stacks */
       .bank {
         background: var(--pc-screen);
         border: 1px solid var(--pc-line);
         border-radius: 10px;
-        padding: 12px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 10px 14px;
+        align-items: stretch;
+      }
+      .lhs {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
-        gap: 12px 20px;
-        align-items: center;
+        grid-template-areas: 'batt shunt' 'batt em';
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 8px 10px;
+        min-width: 0;
       }
+      /* Batterie wie in den Gehaeusen (E17): 46 px breit, SoC und SoH darunter */
       .batt {
-        width: 80px;
+        grid-area: batt;
         display: grid;
         justify-items: center;
-        gap: 2px;
+        align-content: start;
+        gap: 1px;
+        min-width: 58px;
         text-align: center;
       }
       .batt svg {
-        width: 58px;
-        height: 108px;
+        width: 46px;
+        height: 71px;
         display: block;
       }
-      .batt b {
-        font-size: 14px;
+      .batt b,
+      .batt .soh {
+        font-size: 11px;
         white-space: nowrap;
       }
-      .soh {
-        font-size: 11.5px;
+      .batt .soh {
         color: var(--pc-fg2);
-      }
-      /* Shunt-Block und Emergency links, BMS-Master rechts ueber beide Zeilen; Breite nach Inhalt (E21) */
-      .grps {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        grid-template-areas: 'shunt bms' 'em bms';
-        align-items: start;
-        gap: 8px;
-        min-width: 0;
       }
       .grp {
         border: 1px solid var(--pc-line);
         border-radius: 8px;
         padding: 6px 10px;
         background: color-mix(in srgb, var(--pc-card) 55%, transparent);
+        font-size: 13px;
       }
       .grp.shunt {
         grid-area: shunt;
       }
-      .grp.bms {
-        grid-area: bms;
-        align-self: stretch;
-      }
       pack-card-emergency {
         grid-area: em;
-        align-self: end;
       }
       .bad {
         color: var(--pc-bad);
       }
-      /* Bloecke untereinander, sobald beide nicht mehr nebeneinander passen (E16, rund 860 px Bankbreite) */
-      @container (max-width: 859px) {
-        .grps {
+      .grp .narrow {
+        display: none;
+      }
+      /* Haelften untereinander, sobald sie nicht mehr nebeneinander passen (E16, rund 700 px Bankbreite) */
+      @container (max-width: 699px) {
+        .bank {
           grid-template-columns: minmax(0, 1fr);
-          grid-template-areas: 'shunt' 'bms' 'em';
         }
       }
-      /* Handy: Batterie, SoC und SoH klein in einer Zeile (E16, Umbruch rund 520 px) */
       @container (max-width: 519px) {
         .bank {
-          grid-template-columns: 1fr;
-          gap: 8px;
-          padding: 10px;
-        }
-        .batt {
-          width: auto;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          justify-content: flex-start;
-        }
-        .batt svg {
-          width: 30px;
-          height: 56px;
-        }
-        .grps {
+          padding: 6px;
           gap: 6px;
+        }
+        .grp .wide {
+          display: none;
+        }
+        .grp .gk.narrow {
+          display: block;
+        }
+        .grp .gv.narrow {
+          display: flex;
+        }
+        .lhs {
+          gap: 6px 8px;
         }
         .grp {
           font-size: 12px;
-          column-gap: 6px;
+          column-gap: 5px;
           padding: 5px 6px;
-        }
-        .grp .gk {
-          white-space: normal;
-          max-width: 9em;
         }
       }
     `,
@@ -159,11 +153,11 @@ export class PackCardBank extends LitElement {
     try {
       return html`<div class="wrap">
         <div class="bank">
-          ${this.renderBatt()}
-          <div class="grps">
-            ${this.renderShunt()}${this.renderMaster()}
+          <div class="lhs">
+            ${this.renderBatt()}${this.renderShunt()}
             <pack-card-emergency .hass=${this.hass} .packs=${this.packs} .now=${this.now}></pack-card-emergency>
           </div>
+          ${this.renderMaster()}
         </div>
       </div>`;
     } catch (e) {
@@ -180,7 +174,7 @@ export class PackCardBank extends LitElement {
       const soh = numberOf(h, sohId);
       const svg = battSvg(soc);
       return html`<div class="batt">
-        ${val(this, h, socId, svg)} ${val(this, h, socId, html`<b>SoC ${num(soc, 1, '%')}</b>`)}
+        ${val(this, h, socId, svg)}${val(this, h, socId, html`<b>SoC ${num(soc, 1, '%')}</b>`)}
         ${val(this, h, sohId, html`<span class="soh">SoH ${num(soh, 0, '%')}</span>`)}
       </div>`;
     } catch (e) {
@@ -245,8 +239,11 @@ export class PackCardBank extends LitElement {
       const cnt = (x: number | undefined) => (x === undefined ? DASH : String(Math.round(x)));
       return group(
         [
-          { k: 'Zelle max / min:', v: [cell('max_cell_voltage', 'max_voltage_cell_id'), cell('min_cell_voltage', 'min_voltage_cell_id')] },
-          { k: tempLabel('max'), v: [val(this, h, M('max_cell_temperature'), num(numberOf(h, M('max_cell_temperature')), 1, '°C'))] },
+          // breit eine Zeile „Zelle max / min“, schmal zwei Zeilen, damit nichts umbricht (Container-Abfrage unten)
+          { k: 'Zelle max / min:', v: [cell('max_cell_voltage', 'max_voltage_cell_id'), cell('min_cell_voltage', 'min_voltage_cell_id')], cls: 'wide' },
+          { k: 'Zelle max:', v: [cell('max_cell_voltage', 'max_voltage_cell_id')], cls: 'narrow' },
+          { k: 'Zelle min:', v: [cell('min_cell_voltage', 'min_voltage_cell_id')], cls: 'narrow' },
+          { k: tempLabel('Zelle max'), v: [this.renderTemp()] },
           {
             k: 'Online / Charge / Discharge:',
             v: [
@@ -262,6 +259,22 @@ export class PackCardBank extends LitElement {
     } catch (e) {
       return fallback('BMS-Master', e);
     }
+  }
+
+  /**
+   * Hoechste Zelltemperatur des BMS-Masters (Batteriefuehler ohne MOSFET, A01b) mit dem Pack aus der GX-Kennung MM::CC;
+   * die zweite Stelle ist kein eindeutiger Fuehler (Live 2026-11-02) und wird nicht gezeigt.
+   */
+  private renderTemp(): TemplateResult {
+    const h = this.hass;
+    const M = (k: string) => `${BANK_MASTER}${k}`;
+    const raw = textOf(h, M('max_temperature_cell_id'));
+    const m = raw ? /^(\d+)::\d+$/.exec(raw.trim()) : null;
+    const pack = m ? gxPack(Number(m[1])) : undefined;
+    return html`<span class="nw"
+      >${val(this, h, M('max_cell_temperature'), num(numberOf(h, M('max_cell_temperature')), 1, '°C'))}
+      ${pack !== undefined ? html`<span class="src">${val(this, h, M('max_temperature_cell_id'), `(Pack ${pack})`)}</span>` : ''}</span
+    >`;
   }
 
   private renderAlarm(): TemplateResult {

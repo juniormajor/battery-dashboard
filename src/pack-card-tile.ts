@@ -50,7 +50,7 @@ export class PackCardTile extends LitElement {
       }
       .soc svg {
         width: 46px;
-        height: 86px;
+        height: 71px;
       }
       .soc b,
       .soc .soh {
@@ -105,8 +105,8 @@ export class PackCardTile extends LitElement {
           min-width: 50px;
         }
         .soc svg {
-          width: 38px;
-          height: 72px;
+          width: 40px;
+          height: 62px;
         }
         .scr {
           padding: 4px 6px;

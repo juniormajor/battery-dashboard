@@ -1,5 +1,6 @@
-// Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur mit Thermometer und „ESP“, WLAN, Laufzeit)
-// und „ESP neu starten“ mit einer Sekunde Halten (E7). Diagnose-IDs ohne Bereichspraefix nach A01b E15.
+// Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur mit Thermometer und „ESP“, WLAN) und in
+// derselben Zeile „ESP reboot“ mit einer Sekunde Halten (E7); die Laufzeit des ESP steht im Hinweis des Knopfs.
+// Diagnose-IDs ohne Bereichspraefix nach A01b E15.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, StackConfig, isAvailable, numberOf, secondsOf, stackDiagEntity, stackEntity } from './entities';
 import { num, snum, uptimeText } from './format';
@@ -19,13 +20,14 @@ export class PackCardStackHead extends LitElement {
     css`
       :host {
         display: block;
+        container-type: inline-size;
       }
       .h {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 4px 12px;
-        padding: 8px 10px;
+        gap: 4px 10px;
+        padding: 7px 10px;
         background: var(--pc-raise);
         border-bottom: 1px solid var(--pc-line);
       }
@@ -36,9 +38,31 @@ export class PackCardStackHead extends LitElement {
       .esp {
         display: flex;
         flex-wrap: wrap;
-        gap: 2px 12px;
+        gap: 2px 10px;
         font-size: 12px;
         color: var(--pc-fg2);
+      }
+      pack-card-hold::part(button) {
+        padding: 3px 10px;
+        font-size: 12.5px;
+      }
+      /* Handy: Name, ESP-Werte und „ESP reboot“ in einer Zeile */
+      @container (max-width: 379px) {
+        .h {
+          gap: 4px 7px;
+          padding: 7px 8px;
+        }
+        .name {
+          font-size: 14px;
+        }
+        .esp {
+          gap: 2px 7px;
+          font-size: 11.5px;
+        }
+        pack-card-hold::part(button) {
+          padding: 3px 7px;
+          font-size: 12px;
+        }
       }
       .esp .v {
         color: var(--pc-fg);
@@ -62,11 +86,12 @@ export class PackCardStackHead extends LitElement {
         <span class="esp">
           <span>${tempLabel('ESP', false)} ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
           <span>WLAN ${val(this, h, wifi, snum(numberOf(h, wifi), 0, 'dBm'))}</span>
-          <span>Laufzeit ${val(this, h, up, uptimeText(secondsOf(h, up)))}</span>
         </span>
         <span class="sp"></span>
         <pack-card-hold
-          .label=${'ESP neu starten'}
+          plain
+          .label=${'ESP reboot'}
+          .info=${`ESP-Laufzeit ${uptimeText(secondsOf(h, up))}`}
           .disabled=${!canPress}
           .reason=${`${restart} nicht verfügbar – ESP nicht erreichbar`}
           tone="bad"

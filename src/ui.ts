@@ -32,6 +32,8 @@ export interface GroupLine {
   span?: boolean;
   /** kein „/“ vor dem dritten Wert (Zusatz wie die Balancer-Zellen) */
   nosep?: boolean;
+  /** Klasse fuer Bezeichnung und Werte, z. B. wide/narrow fuer Zeilen, die nur breit bzw. nur schmal erscheinen */
+  cls?: string;
 }
 
 /**
@@ -42,7 +44,7 @@ export function group(lines: GroupLine[], cls = ''): TemplateResult {
   return html`<div class="grp ${cls}">
     ${lines.map((l) => {
       const vs = l.v.filter((x) => x !== undefined);
-      return html`<span class="gk">${l.k}</span><span class="gv ${l.span ? 'span' : ''}"
+      return html`<span class="gk ${l.cls ?? ''}">${l.k}</span><span class="gv ${l.span ? 'span' : ''} ${l.cls ?? ''}"
         >${vs.map((x, i) => html`${i > 0 ? (i === 2 && l.nosep ? html` ` : html`<span class="gs">/</span>`) : ''}${x}`)}</span
       >`;
     })}
@@ -94,15 +96,19 @@ export async function selectPack(hass: Hass | undefined, n: number): Promise<voi
   }
 }
 
-/** Senkrechte Batterie mit SoC-Fuellung (Bank-Display E16, Packansicht E19); Groesse setzt das CSS des Aufrufers. */
-export function battSvg(soc: number | undefined): TemplateResult {
-  const fillH = ((soc === undefined ? 0 : Math.max(0, Math.min(100, soc))) / 100) * 86;
-  return html`<svg viewBox="0 0 58 108" role="img" aria-label=${`SoC ${fmt(soc, 1)} Prozent`}>
+/**
+ * Senkrechte Batterie mit SoC-Fuellung (Bank-Display E16, Gehaeuse E17, Packansicht E19); Groesse setzt das CSS des
+ * Aufrufers. vh ist die Hoehe im viewBox bei 58 Breite: 108 schlank, 90 gedrungen (seit v0.5.2 ueberall).
+ */
+export function battSvg(soc: number | undefined, vh = 90): TemplateResult {
+  const fillMax = vh - 22;
+  const fillH = ((soc === undefined ? 0 : Math.max(0, Math.min(100, soc))) / 100) * fillMax;
+  return html`<svg viewBox=${`0 0 58 ${vh}`} role="img" aria-label=${`SoC ${fmt(soc, 1)} Prozent`}>
     <rect x="20" y="1" width="18" height="7" rx="2" fill="var(--pc-fg3)"></rect>
-    <rect x="3" y="8" width="52" height="98" rx="7" fill="var(--pc-card)" stroke="var(--pc-fg3)" stroke-width="2"></rect>
-    <rect x="9" y=${14 + 86 - fillH} width="40" height=${fillH} rx="3" fill=${socColor(soc)}></rect>
+    <rect x="3" y="8" width="52" height=${vh - 10} rx="7" fill="var(--pc-card)" stroke="var(--pc-fg3)" stroke-width="2"></rect>
+    <rect x="9" y=${14 + fillMax - fillH} width="40" height=${fillH} rx="3" fill=${socColor(soc)}></rect>
     ${[25, 50, 75].map((q) => {
-      const y = 14 + 86 - (q / 100) * 86;
+      const y = 14 + fillMax - (q / 100) * fillMax;
       return html`<line x1="9" x2="49" y1=${y} y2=${y} stroke="var(--pc-card)" stroke-width="1.5"></line>`;
     })}
   </svg>`;

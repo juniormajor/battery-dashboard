@@ -1,6 +1,7 @@
 // Halteknopf (A01d E7): loest erst nach einer Sekunde Halten aus, Loslassen oder Verlassen davor bricht ab.
 // Maus, Touch und Tastatur (Leertaste/Enter halten). Deaktiviert mit Grund im title (E10).
-// plain: nur die Bezeichnung (Emergency), gefuellt, solange aktiv.
+// plain: nur die Bezeichnung (Emergency, ESP reboot, Pack reboot), der Hinweis aufs Halten steht im title; gefuellt,
+// solange aktiv. Die Fuellung beim Halten laeuft auch bei „Animationen reduzieren“ (A01d E7).
 // Form „switch“: als Schalter der Packansicht (E19) fuer das Ausschalten von Charge, Discharge und Bluetooth.
 import { LitElement, html, css, nothing, PropertyValues, TemplateResult } from 'lit';
 import { switchStyles } from './ui';
@@ -105,11 +106,7 @@ export class PackCardHold extends LitElement {
         font-weight: 400;
         padding: 5px 8px;
       }
-      @media (prefers-reduced-motion: reduce) {
-        .go .fill {
-          transition-duration: 0s;
-        }
-      }
+      /* Die Fuellung ist die einzige Rueckmeldung beim Halten und laeuft darum auch bei reduzierten Animationen. */
     `,
   ];
 

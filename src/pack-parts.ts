@@ -158,9 +158,9 @@ export const caseStyles = css`
     background: var(--pc-card);
     border: 2px solid var(--pc-line);
     border-radius: 8px;
-    padding: 6px 10px 0;
+    padding: 5px 10px 0;
     display: grid;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
   }
   .case.soc-lo {
@@ -211,16 +211,18 @@ export const caseStyles = css`
     outline: 2px solid var(--pc-accent);
     outline-offset: 2px;
   }
+  /* Bildschirm so hoch wie Batterie samt SoC und SoH, damit ueber und unter dem Rahmen kein Leerraum bleibt */
   .case-mid {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 10px;
-    align-items: center;
+    align-items: stretch;
     min-width: 0;
   }
   .soc {
     display: grid;
     justify-items: center;
+    align-content: center;
     gap: 1px;
     text-align: center;
   }
@@ -236,12 +238,16 @@ export const caseStyles = css`
   }
   /* Bildschirm im dunklen Rahmen wie das Fenster des BMS-Displays */
   .bezel {
+    display: flex;
     border: 4px solid var(--pc-bezel);
     border-radius: 6px;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-bezel) 60%, transparent);
     min-width: 0;
   }
   .bezel .scr {
+    flex: 1;
+    display: grid;
+    align-content: center;
     border: 0;
     border-radius: 2px;
   }
