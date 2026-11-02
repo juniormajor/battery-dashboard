@@ -21,7 +21,7 @@ stacks:
     name: Stack 2
 ```
 
-Klickziele (optional): `pack_path` ist die Packansicht (Standard `pack`), `zellen_path` die Zellanalyse (Standard `zellen`), `speicher_path` das Ziel des Rücklinks der Packansicht (Standard `speicher`), jeweils relativ zum aktuellen Dashboard (`/<dashboard-url>/pack`) oder absolut ab `/`. Ein Klick auf „Pack n“ setzt vorher `input_select.zellen_pack` auf `Pack_<n>`.
+Klickziele (optional): `pack_path` ist die Packansicht (Standard `pack`), `zellen_path` die Zellanalyse (Standard `zellen`), `speicher_path` das Ziel des Rücklinks der Packansicht (Standard `speicher`), jeweils relativ zum aktuellen Dashboard (`/<dashboard-url>/pack`) oder absolut ab `/`. Die Zellkennung des BMS-Masters am GX („MM::CC“) erscheint als Pack:Zelle: Modul 00 ist Pack_1, 02 bis 06 sind Pack_2 bis Pack_6. Ein Klick auf „Pack n“ setzt vorher `input_select.zellen_pack` auf `Pack_<n>`.
 
 ```yaml
 pack_path: pack

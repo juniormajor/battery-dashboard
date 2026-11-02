@@ -75,9 +75,20 @@ export function packCell(pack: number, cell: number): string {
   return `${pad2(pack)}:${pad2(cell)}`;
 }
 
-/** Kennung der Extremzelle am GX „MM::CC“ als „MM:CC“ mit roher Modulnummer (E20); anderes roh. */
+/**
+ * Modul der GX-Kennung „MM::CC“ als Packnummer (A01d-09, Live 2026-11-02): die Module sind die RS485-Adressen der BMS,
+ * 00 ist der Master Pack_1, 02 bis 06 sind Pack_2 bis Pack_6; Adresse 01 kommt nicht vor.
+ */
+export function gxPack(module: number): number | undefined {
+  if (module === 0) return 1;
+  return module >= 2 && module <= 6 ? module : undefined;
+}
+
+/** Kennung der Extremzelle am GX „MM::CC“ als Pack:Zelle (E20, A01d-09); unbekanntes Modul und anderes roh. */
 export function cellId(raw: string | undefined): string {
   if (!raw) return DASH;
   const m = /^(\d+)::(\d+)$/.exec(raw.trim());
-  return m ? `${pad2(Number(m[1]))}:${pad2(Number(m[2]))}` : raw;
+  if (!m) return raw;
+  const pack = gxPack(Number(m[1]));
+  return pack === undefined ? raw.trim() : packCell(pack, Number(m[2]));
 }
