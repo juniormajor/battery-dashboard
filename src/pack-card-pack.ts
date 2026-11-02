@@ -8,7 +8,7 @@ import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
 import { CapUnit, DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
 import { band, balancerState, bleInfo, capLine, caseStyles, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, caseBottom, CELLS } from './pack-parts';
-import { battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, tempLabel, val, viewPath } from './ui';
+import { UNIT_EVENT, battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, tempLabel, unitSwitch, val, viewPath } from './ui';
 
 interface SwitchDef {
   key: string;
@@ -104,6 +104,7 @@ export class PackCardPack extends LitElement {
       }
       .nav {
         display: inline-flex;
+        align-items: center;
         gap: 6px;
         flex-wrap: wrap;
       }
@@ -368,6 +369,7 @@ export class PackCardPack extends LitElement {
       ${cur.fromHelper ? '' : html`<span class="tag warn" title=${cur.reason}>Pack-Auswahl fehlt</span>`}
       <span class="sp"></span>
       <span class="nav">
+        ${unitSwitch(this.unit, this._setUnit)}
         <button type="button" class="btn pri" @click=${this._openCells}>Zellanalyse →</button>
         <button
           type="button"
@@ -605,6 +607,11 @@ export class PackCardPack extends LitElement {
     if (this.reasonFor(id, p)) return;
     this._call('button', 'press', id, 'BMS-Neustart');
   }
+
+  /** Ah/kWh: an den Rahmen melden, der die Wahl merkt und an alle Ansichten weitergibt (E19). */
+  private _setUnit = (u: CapUnit): void => {
+    this.dispatchEvent(new CustomEvent(UNIT_EVENT, { detail: u, bubbles: true, composed: true }));
+  };
 
   /** Vorheriges/naechstes Pack: nur den Helfer setzen, die Ansicht bleibt (E5). */
   private _select(n: number): void {

@@ -1,7 +1,7 @@
 // Gemeinsame Bausteine: anklickbarer Wert (E4), spaltenbuendige Gruppe (E21), Navigation, Rueckfall (E10), Stile (E15).
 import { css, html, TemplateResult } from 'lit';
 import { Hass, ZELLEN_PACK, exists, stateOf } from './entities';
-import { fmt } from './format';
+import { CapUnit, fmt } from './format';
 
 export function fireMoreInfo(node: EventTarget, entityId: string): void {
   node.dispatchEvent(new CustomEvent('hass-more-info', { detail: { entityId }, bubbles: true, composed: true }));
@@ -63,6 +63,19 @@ export const thermo = html`<svg class="ico" viewBox="0 0 12 20" role="img" aria-
  */
 export function tempLabel(what: string, colon = true): TemplateResult {
   return html`<span class="tl">${thermo}${what}${colon ? ':' : ''}</span>`;
+}
+
+/** Ereignis, mit dem eine Ansicht die Einheit der Kapazitaet an die Karte meldet (Packansicht -> Rahmen). */
+export const UNIT_EVENT = 'pack-card-unit';
+
+/**
+ * Umschalter Ah/kWh fuer die Kapazitaet (E16, E19): gleiche Optik in Speicher und Pack; die Wahl gilt fuer alle
+ * Ansichten und wird je Browser gemerkt (Rahmen pack-card).
+ */
+export function unitSwitch(unit: CapUnit, set: (u: CapUnit) => void): TemplateResult {
+  const b = (u: CapUnit) =>
+    html`<button type="button" aria-pressed=${String(unit === u)} @click=${() => set(u)}>${u}</button>`;
+  return html`<span class="seg" role="group" aria-label="Kapazität in">${b('Ah')}${b('kWh')}</span>`;
 }
 
 /** Ansichtspfad: absolut ab „/“, sonst relativ zum aktuellen Dashboard (/<dashboard-url>/<pfad>). */
@@ -219,6 +232,34 @@ export const sharedStyles = css`
   }
   .sp {
     flex: 1;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--pc-line);
+    border-radius: 8px;
+    overflow: hidden;
+    flex: none;
+  }
+  .seg button {
+    border: 0;
+    background: transparent;
+    padding: 2px 9px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    color: var(--pc-fg2);
+  }
+  .seg button + button {
+    border-left: 1px solid var(--pc-line);
+  }
+  .seg button[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--pc-accent) 16%, transparent);
+    color: var(--pc-fg);
+    font-weight: 500;
+  }
+  .seg button:focus-visible {
+    outline: 2px solid var(--pc-accent);
+    outline-offset: -2px;
   }
   .tag {
     display: inline-flex;

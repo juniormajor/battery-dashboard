@@ -7,7 +7,7 @@ import { LitElement, html, css, unsafeCSS, PropertyValues, TemplateResult } from
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
 import { SocFrame, packSocForFrame } from './pack-card-tile';
-import { fallback, navigate, sharedStyles, themeVars, viewPath } from './ui';
+import { fallback, navigate, sharedStyles, themeVars, unitSwitch, viewPath } from './ui';
 
 type View = 'speicher' | 'pack' | 'zellen';
 
@@ -25,6 +25,8 @@ export interface PackCardConfig {
 }
 
 const UNIT_KEY = 'pack-card-unit';
+/** Fensterereignis: jede Karteninstanz (Speicher, Pack) uebernimmt eine geaenderte Einheit sofort */
+const UNIT_SYNC = 'pack-card-unit-sync';
 /** Hoechste Breite der Ansichten speicher und pack; ein Theme kann sie ueber --pack-card-max-width aendern. */
 const MAX_W = '900px';
 const TICK_MS = 5000;
@@ -93,29 +95,6 @@ export class PackCard extends LitElement {
       .head .sub {
         color: var(--pc-fg2);
         font-size: 13px;
-      }
-      .seg {
-        display: inline-flex;
-        border: 1px solid var(--pc-line);
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .seg button {
-        border: 0;
-        background: transparent;
-        padding: 2px 9px;
-        cursor: pointer;
-        font: inherit;
-        font-size: 12px;
-        color: var(--pc-fg2);
-      }
-      .seg button + button {
-        border-left: 1px solid var(--pc-line);
-      }
-      .seg button[aria-pressed='true'] {
-        background: color-mix(in srgb, var(--pc-accent) 16%, transparent);
-        color: var(--pc-fg);
-        font-weight: 500;
       }
       /* Schrank: Stacks nebeneinander, unter rund 700 px (2 x 330 px) untereinander; nie breiter als die Karte (R4) */
       .cab {
@@ -213,6 +192,9 @@ export class PackCard extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    // HA haelt die Ansichten vor: beim Wiedereinhaengen die gemerkte Einheit uebernehmen und Aenderungen mithoeren
+    this._unit = readUnit();
+    window.addEventListener(UNIT_SYNC, this._onUnitSync);
     this._tick = window.setInterval(() => {
       this._now = Date.now();
     }, TICK_MS);
@@ -220,6 +202,7 @@ export class PackCard extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    window.removeEventListener(UNIT_SYNC, this._onUnitSync);
     if (this._tick !== undefined) window.clearInterval(this._tick);
     this._tick = undefined;
   }
@@ -244,6 +227,10 @@ export class PackCard extends LitElement {
             .unit=${this._unit}
             .speicherPath=${this._speicherPath}
             .zellenPath=${this._zellenPath}
+            @pack-card-unit=${(e: CustomEvent<CapUnit>) => {
+              e.stopPropagation();
+              this._setUnit(e.detail);
+            }}
           ></pack-card-pack>
         </ha-card>`;
       } catch (e) {
@@ -278,13 +265,11 @@ export class PackCard extends LitElement {
   }
 
   private renderHead(): TemplateResult {
-    const unitBtn = (u: CapUnit) =>
-      html`<button type="button" aria-pressed=${String(this._unit === u)} @click=${() => this._setUnit(u)}>${u}</button>`;
     return html`<div class="head">
       <h2>Speicher</h2>
       <span class="sub">${this._packs.length} Packs · ${this._stacks.length} Stacks</span>
       <span class="sp"></span>
-      <span class="seg" role="group" aria-label="Kapazität in">${unitBtn('Ah')}${unitBtn('kWh')}</span>
+      ${unitSwitch(this._unit, (u) => this._setUnit(u))}
       <button type="button" class="link" @click=${() => navigate(viewPath(this._zellenPath))}>Zellanalyse →</button>
     </div>`;
   }
@@ -360,5 +345,11 @@ export class PackCard extends LitElement {
     } catch {
       /* ohne Speicher gilt die Wahl nur fuer diese Seite */
     }
+    window.dispatchEvent(new CustomEvent(UNIT_SYNC, { detail: u }));
   }
+
+  private _onUnitSync = (e: Event): void => {
+    const u = (e as CustomEvent<CapUnit>).detail;
+    if ((u === 'Ah' || u === 'kWh') && u !== this._unit) this._unit = u;
+  };
 }
