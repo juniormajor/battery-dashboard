@@ -256,7 +256,7 @@ export class PackCard extends LitElement {
         <div class="speicher">
           ${this.renderHead()}
           <pack-card-bank .hass=${this.hass} .unit=${this._unit}></pack-card-bank>
-          <pack-card-emergency .hass=${this.hass} .packs=${this._packs}></pack-card-emergency>
+          <pack-card-emergency .hass=${this.hass} .packs=${this._packs} .now=${this._now}></pack-card-emergency>
           ${this.renderCabinet()} ${this.renderLegend()}
         </div>
       </ha-card>`;

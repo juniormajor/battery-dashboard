@@ -4,7 +4,7 @@
 // Zellblock (eigenes Element); BLE-Diagnose; unten Notbetrieb und BMS-Neustart mit einer Sekunde Halten (E7).
 // Jeder Block in eigenem try/catch mit sichtbarem Rueckfall (E10), Zustaende nur ueber die Guards aus entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
-import { Hass, PackConfig, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
+import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
 import { DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
 import { band, balancerState, bleInfo, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, CELLS } from './pack-parts';
 import { battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, thermo, val, viewPath } from './ui';
@@ -15,6 +15,8 @@ interface SwitchDef {
   title: string;
   /** Ausschalten nur mit einer Sekunde Halten (Ergaenzung zu E7: Laden, Entladen, Bluetooth) */
   guard: boolean;
+  /** wirkt am ESP, nicht am BMS: bleibt bedienbar, wenn das Pack keine Daten liefert (A01d-12) */
+  esp?: boolean;
 }
 
 /** Fuenf Schalter (E19; Low-Balance entfaellt seit A01b E28). */
@@ -23,7 +25,7 @@ const SWITCHES: SwitchDef[] = [
   { key: 'discharging', label: 'Entladen', title: 'Entladen', guard: true },
   { key: 'balancer', label: 'Balancer', title: 'Balancer', guard: false },
   { key: 'charging_float_mode', label: 'Float', title: 'Float-Modus', guard: false },
-  { key: 'enable_bluetooth_connection', label: 'Bluetooth', title: 'Bluetooth (Aus trennt das Pack)', guard: true },
+  { key: 'enable_bluetooth_connection', label: 'Bluetooth', title: 'Bluetooth (Aus trennt das Pack)', guard: true, esp: true },
 ];
 
 /** Client-Zustand beim letzten Eingriff von Ebene 1 (A01f, Live-Abfragen: 0 = keiner seit Boot). */
@@ -300,12 +302,19 @@ export class PackCardPack extends LitElement {
     return typeof this.hass?.callService === 'function';
   }
 
-  /** Grund, warum ein Bedienelement deaktiviert ist; leer, wenn es bedienbar ist (E10, Besonderheiten). */
-  private reasonFor(id: string): string {
+  /**
+   * Grund, warum ein Bedienelement deaktiviert ist; leer, wenn es bedienbar ist (E10, Besonderheiten).
+   * Mit bmsPack wirkt der Befehl am BMS: ohne frische Daten des Packs erreicht er es nicht, der Schalter
+   * selbst bleibt dabei on/off statt unavailable (AU10 2026-11-02, A01d-12).
+   */
+  private reasonFor(id: string, bmsPack?: PackConfig): string {
     const s = this.hass?.states[id];
     if (!s) return `${id} fehlt`;
     if (s.state === 'unavailable') return `${id} nicht verfügbar – ohne Verbindung zum BMS nicht schaltbar`;
     if (!this.canCall) return 'Keine Verbindung zu Home Assistant';
+    if (bmsPack && !packAge(this.hass, bmsPack, this.now).fresh) {
+      return `Pack ${bmsPack.pack} ohne Daten seit über ${STALE_S} s – der Befehl erreicht das BMS nicht`;
+    }
     return '';
   }
 
@@ -386,14 +395,15 @@ export class PackCardPack extends LitElement {
   private renderSwitch(p: PackConfig, d: SwitchDef): TemplateResult {
     const id = packEntity(p, 'switch', d.key);
     const on = this.hass?.states[id]?.state === 'on';
-    const reason = this.reasonFor(id);
+    const bms = d.esp ? undefined : p;
+    const reason = this.reasonFor(id, bms);
     if (d.guard && on && !reason) {
       return html`<pack-card-hold
         variant="switch"
         data-entity=${id}
         .label=${d.label}
         .active=${true}
-        @hold-complete=${() => this._switch(id, 'turn_off', true)}
+        @hold-complete=${() => this._switch(id, 'turn_off', true, bms)}
       ></pack-card-hold>`;
     }
     // Einschalten (bei Laden, Entladen, Bluetooth) und Balancer/Float mit einfachem Tippen
@@ -407,7 +417,7 @@ export class PackCardPack extends LitElement {
       aria-label=${d.title}
       ?disabled=${!!reason}
       title=${reason || `${d.title}: antippen ${d.guard ? 'schaltet ein' : 'schaltet um'}`}
-      @click=${() => this._switch(id, service, d.guard)}
+      @click=${() => this._switch(id, service, d.guard, bms)}
     >
       <span class="lbl"><span>${d.label}</span></span
       ><i class="knob"></i>
@@ -536,9 +546,9 @@ export class PackCardPack extends LitElement {
     const emId = packEntity(p, 'switch', 'emergency');
     const rsId = packEntity(p, 'button', 'restart');
     const emOn = this.hass?.states[emId]?.state === 'on';
-    const emReason = this.reasonFor(emId);
+    const emReason = this.reasonFor(emId, p);
     // Knopf ohne bisherigen Druck steht auf unknown: Normalzustand, bedienbar (Besonderheiten)
-    const rsReason = this.reasonFor(rsId);
+    const rsReason = this.reasonFor(rsId, p);
     // Pack_1 ist Master am CAN zum Cerbo (Besonderheiten); A01f: dort nicht neu starten
     const master = p.pack === 1;
     return html`<div class="holds">
@@ -549,7 +559,7 @@ export class PackCardPack extends LitElement {
         .disabled=${!!emReason}
         .reason=${emReason}
         tone="warn"
-        @hold-complete=${() => this._emergency(emId)}
+        @hold-complete=${() => this._emergency(emId, p)}
       ></pack-card-hold>
       <pack-card-hold
         class="rs"
@@ -557,7 +567,7 @@ export class PackCardPack extends LitElement {
         .disabled=${!!rsReason}
         .reason=${rsReason}
         tone="bad"
-        @hold-complete=${() => this._restart(rsId)}
+        @hold-complete=${() => this._restart(rsId, p)}
       ></pack-card-hold>
     </div>`;
   }
@@ -572,22 +582,22 @@ export class PackCardPack extends LitElement {
   }
 
   /** Schalter: Zustand beim Ausloesen neu lesen; geschuetzte Schalter schalten nie per Tippen aus. */
-  private _switch(id: string, service: 'toggle' | 'turn_on' | 'turn_off', guard: boolean): void {
-    if (this.reasonFor(id)) return;
+  private _switch(id: string, service: 'toggle' | 'turn_on' | 'turn_off', guard: boolean, bms?: PackConfig): void {
+    if (this.reasonFor(id, bms)) return;
     const on = this.hass?.states[id]?.state === 'on';
     if (guard && service === 'turn_on' && on) return;
     if (service === 'turn_off' && !on) return;
     this._call('switch', service, id, `Schalter ${id}`);
   }
 
-  private _emergency(id: string): void {
-    if (this.reasonFor(id)) return;
+  private _emergency(id: string, p: PackConfig): void {
+    if (this.reasonFor(id, p)) return;
     const on = this.hass?.states[id]?.state === 'on';
     this._call('switch', on ? 'turn_off' : 'turn_on', id, 'Notbetrieb');
   }
 
-  private _restart(id: string): void {
-    if (this.reasonFor(id)) return;
+  private _restart(id: string, p: PackConfig): void {
+    if (this.reasonFor(id, p)) return;
     this._call('button', 'press', id, 'BMS-Neustart');
   }
 

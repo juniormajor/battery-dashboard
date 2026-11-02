@@ -1,13 +1,15 @@
 // Zentraler Notbetrieb (A01d E7): ein Knopf fuer alle Packs, Ein und Aus je mit einer Sekunde Halten,
-// daneben die Anzahl der Packs im Notbetrieb. Einzeln schaltet nur die Packansicht.
+// daneben die Anzahl der Packs im Notbetrieb. Einzeln schaltet nur die Packansicht. Packs ohne frische Daten
+// gelten als nicht erreichbar und werden nicht geschaltet (A01d-12): ihr Schalter steht dann weiter auf on/off.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, packEntity, stateOf } from './entities';
+import { packAge } from './pack-parts';
 import { fallback, sharedStyles } from './ui';
 
 interface EmergencyState {
   /** schaltbare Schalter (vorhanden, nicht unavailable/unknown) */
   avail: string[];
-  /** Packs, deren Schalter fehlt oder nicht verfuegbar ist */
+  /** Packs, deren Schalter fehlt oder nicht verfuegbar ist oder die keine frischen Daten liefern */
   missing: number[];
   on: number;
 }
@@ -16,10 +18,13 @@ export class PackCardEmergency extends LitElement {
   static properties = {
     hass: { attribute: false },
     packs: { attribute: false },
+    now: { type: Number },
   };
 
   hass?: Hass;
   packs: PackConfig[] = [];
+  /** Zeitpunkt fuer das Datenalter; 0 = nicht gesetzt, dann zaehlt jedes Pack als frisch */
+  now = 0;
 
   static styles = [
     sharedStyles,
@@ -54,7 +59,7 @@ export class PackCardEmergency extends LitElement {
     for (const p of this.packs) {
       const id = packEntity(p, 'switch', 'emergency');
       const s = stateOf(this.hass, id);
-      if (!s) {
+      if (!s || (this.now > 0 && !packAge(this.hass, p, this.now).fresh)) {
         missing.push(p.pack);
         continue;
       }
