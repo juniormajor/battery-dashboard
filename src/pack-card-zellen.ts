@@ -12,8 +12,8 @@ import { fallback, navigate, selectPack, sharedStyles, val, viewPath } from './u
 export const ZEITRAUM = 'input_select.zellen_zeitraum';
 export const ZUSTAND = 'input_select.zellen_zustand';
 
-/** Anzeige der Helferwerte: Laden und Entladen heissen in der Karte Charge und Discharge; der Helferwert bleibt (A01c). */
-const OPT_LABEL: Record<string, string> = { Laden: 'Charge', Entladen: 'Discharge' };
+/** Anzeige der Helferwerte: Laden, Entladen und Ruhe heissen in der Karte Charge, Discharge und Idle; der Helferwert bleibt (A01c). */
+const OPT_LABEL: Record<string, string> = { Laden: 'Charge', Entladen: 'Discharge', Ruhe: 'Idle' };
 const optLabel = (o: string): string => OPT_LABEL[o] ?? o;
 export const SPREIZUNG = 'input_number.zellen_mindestspreizung';
 export const STATUS = 'sensor.zellen_status';
