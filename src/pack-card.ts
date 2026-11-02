@@ -1,8 +1,9 @@
 // Rahmen der Karte (A01d E1, E2): eine Instanz je Ansicht, konfiguriert werden packs, stacks und die Klickziele.
-// Ansicht speicher: Kopf (Ah/kWh, Zellanalyse), Bank-Display (E16), zentraler Notbetrieb (E7), Schrank (E17), Legende.
+// Ansicht speicher: Kopf (Ah/kWh, Zellanalyse), Bank-Display (E16) mit dem zentralen Emergency (E7), Schrank (E17),
+// Legende. Speicher und Pack sind hoechstens MAX_W breit und mittig (E2), die Zellanalyse nutzt die volle Breite.
 // Ansicht pack: ein Pack aus input_select.zellen_pack (E5, E19), gezeichnet von pack-card-pack.
 // Ansicht zellen: Zellanalyse (E18) aus den sql-Sensoren der Zellauswertung (A01c), gezeichnet von pack-card-zellen.
-import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
+import { LitElement, html, css, unsafeCSS, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
 import { SocFrame, packSocForFrame } from './pack-card-tile';
@@ -24,6 +25,8 @@ export interface PackCardConfig {
 }
 
 const UNIT_KEY = 'pack-card-unit';
+/** Hoechste Breite der Ansichten speicher und pack; ein Theme kann sie ueber --pack-card-max-width aendern. */
+const MAX_W = '900px';
 const TICK_MS = 5000;
 
 function readUnit(): CapUnit {
@@ -59,6 +62,14 @@ export class PackCard extends LitElement {
     themeVars,
     sharedStyles,
     css`
+      :host {
+        display: block;
+        max-width: var(--pack-card-max-width, ${unsafeCSS(MAX_W)});
+        margin: 0 auto;
+      }
+      :host([view='zellen']) {
+        max-width: none;
+      }
       ha-card {
         display: block;
         padding: 12px;
@@ -185,6 +196,7 @@ export class PackCard extends LitElement {
     this._packPath = config.pack_path?.trim() || 'pack';
     this._zellenPath = config.zellen_path?.trim() || 'zellen';
     this._speicherPath = config.speicher_path?.trim() || 'speicher';
+    this.setAttribute('view', view);
   }
 
   getCardSize(): number {
@@ -255,8 +267,7 @@ export class PackCard extends LitElement {
       return html`<ha-card>
         <div class="speicher">
           ${this.renderHead()}
-          <pack-card-bank .hass=${this.hass} .unit=${this._unit}></pack-card-bank>
-          <pack-card-emergency .hass=${this.hass} .packs=${this._packs} .now=${this._now}></pack-card-emergency>
+          <pack-card-bank .hass=${this.hass} .unit=${this._unit} .packs=${this._packs} .now=${this._now}></pack-card-bank>
           ${this.renderCabinet()} ${this.renderLegend()}
         </div>
       </ha-card>`;

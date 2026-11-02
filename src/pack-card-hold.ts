@@ -1,7 +1,8 @@
 // Halteknopf (A01d E7): loest erst nach einer Sekunde Halten aus, Loslassen oder Verlassen davor bricht ab.
 // Maus, Touch und Tastatur (Leertaste/Enter halten). Deaktiviert mit Grund im title (E10).
-// Form „switch“: als Schalter der Packansicht (E19) fuer das Ausschalten von Laden, Entladen und Bluetooth.
-import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
+// plain: nur die Bezeichnung (Emergency), gefuellt, solange aktiv.
+// Form „switch“: als Schalter der Packansicht (E19) fuer das Ausschalten von Charge, Discharge und Bluetooth.
+import { LitElement, html, css, nothing, PropertyValues, TemplateResult } from 'lit';
 import { switchStyles } from './ui';
 
 export const HOLD_MS = 1000;
@@ -14,6 +15,8 @@ export class PackCardHold extends LitElement {
     disabled: { type: Boolean, reflect: true },
     active: { type: Boolean },
     variant: {},
+    plain: { type: Boolean },
+    info: {},
     _going: { state: true },
   };
 
@@ -26,6 +29,10 @@ export class PackCardHold extends LitElement {
   active = false;
   /** button: Knopf mit „· halten“; switch: Schalter mit Hinweis „halten“ */
   variant: 'button' | 'switch' = 'button';
+  /** Knopf nur mit der Bezeichnung, ohne „· halten“ (Emergency); der Hinweis steht dann im title */
+  plain = false;
+  /** Zusatz fuer den title, z. B. welche Packs nicht geschaltet werden */
+  info = '';
   private _going = false;
   private _timer?: number;
 
@@ -123,8 +130,9 @@ export class PackCardHold extends LitElement {
       part="button"
       class=${cls}
       ?disabled=${this.disabled}
-      title=${this.disabled ? this.reason : `${this.label}: eine Sekunde halten`}
+      title=${this.disabled ? this.reason : `${this.label}: eine Sekunde halten${this.info ? ` · ${this.info}` : ''}`}
       aria-label=${`${this.label}, eine Sekunde halten`}
+      aria-pressed=${this.plain ? String(this.active) : nothing}
       @pointerdown=${this._down}
       @pointerup=${this._cancel}
       @pointerleave=${this._cancel}
@@ -134,7 +142,7 @@ export class PackCardHold extends LitElement {
       @blur=${this._cancel}
       @contextmenu=${(e: Event) => e.preventDefault()}
     >
-      <span class="fill"></span><span class="t">${this.label} · halten</span>
+      <span class="fill"></span><span class="t">${this.plain ? this.label : `${this.label} · halten`}</span>
     </button>`;
   }
 

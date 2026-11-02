@@ -1,6 +1,7 @@
-// Zentraler Notbetrieb (A01d E7): ein Knopf fuer alle Packs, Ein und Aus je mit einer Sekunde Halten,
-// daneben die Anzahl der Packs im Notbetrieb. Einzeln schaltet nur die Packansicht. Packs ohne frische Daten
-// gelten als nicht erreichbar und werden nicht geschaltet (A01d-12): ihr Schalter steht dann weiter auf on/off.
+// Zentrales Emergency (A01d E7): ein Knopf „Emergency“ fuer alle Packs im Bank-Display, Ein und Aus je mit einer
+// Sekunde Halten; gefuellt, solange mindestens ein Pack Emergency an hat. Einzeln schaltet nur die Packansicht.
+// Packs ohne frische Daten gelten als nicht erreichbar und werden nicht geschaltet (A01d-12): ihr Schalter steht dann
+// weiter auf on/off; das steht im title des Knopfs.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, packEntity, stateOf } from './entities';
 import { packAge } from './pack-parts';
@@ -32,22 +33,8 @@ export class PackCardEmergency extends LitElement {
       :host {
         display: block;
       }
-      .row {
-        display: flex;
-        align-items: center;
-        gap: 6px 10px;
-        flex-wrap: wrap;
-      }
-      .cnt {
-        font-size: 12.5px;
-        color: var(--pc-fg2);
-      }
-      .cnt b {
-        color: var(--pc-fg);
-      }
-      .miss {
-        font-size: 12px;
-        color: var(--pc-warn);
+      pack-card-hold {
+        display: block;
       }
     `,
   ];
@@ -77,23 +64,25 @@ export class PackCardEmergency extends LitElement {
       const disabled = !canCall || st.avail.length === 0;
       const reason = !canCall
         ? 'Keine Verbindung zu Home Assistant'
-        : 'Kein Notbetrieb-Schalter erreichbar (switch.pv_pack_<n>_emergency nicht verfügbar)';
-      return html`<div class="row">
-        <pack-card-hold
-          .label=${st.on > 0 ? 'Notbetrieb aus (alle)' : 'Notbetrieb ein (alle)'}
-          .active=${st.on > 0}
-          .disabled=${disabled}
-          .reason=${reason}
-          tone="warn"
-          @hold-complete=${this._fire}
-        ></pack-card-hold>
-        <span class="cnt">Notbetrieb an: <b class="num">${st.on}/${all}</b> Packs · einzeln in der Packansicht</span>
-        ${st.missing.length && !disabled
-          ? html`<span class="miss" title="Diese Packs werden nicht geschaltet">Pack ${st.missing.join(', ')} nicht erreichbar</span>`
-          : ''}
-      </div>`;
+        : 'Kein Emergency-Schalter erreichbar (switch.pv_pack_<n>_emergency nicht verfügbar)';
+      const info = [
+        `an: ${st.on}/${all} Packs, einzeln in der Packansicht`,
+        st.missing.length ? `Pack ${st.missing.join(', ')} nicht erreichbar, wird nicht geschaltet` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      return html`<pack-card-hold
+        plain
+        .label=${'Emergency'}
+        .active=${st.on > 0}
+        .disabled=${disabled}
+        .reason=${reason}
+        .info=${info}
+        tone="warn"
+        @hold-complete=${this._fire}
+      ></pack-card-hold>`;
     } catch (e) {
-      return fallback('Notbetrieb', e);
+      return fallback('Emergency', e);
     }
   }
 
@@ -102,9 +91,9 @@ export class PackCardEmergency extends LitElement {
       const st = this.read();
       if (!st.avail.length || !this.hass?.callService) return;
       const service = st.on > 0 ? 'turn_off' : 'turn_on';
-      this.hass.callService('switch', service, { entity_id: st.avail })?.catch?.((e: unknown) => console.warn('pack-card: Notbetrieb', e));
+      this.hass.callService('switch', service, { entity_id: st.avail })?.catch?.((e: unknown) => console.warn('pack-card: Emergency', e));
     } catch (e) {
-      console.warn('pack-card: Notbetrieb', e);
+      console.warn('pack-card: Emergency', e);
     }
   };
 }

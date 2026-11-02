@@ -11,6 +11,10 @@ import { fallback, navigate, selectPack, sharedStyles, val, viewPath } from './u
 
 export const ZEITRAUM = 'input_select.zellen_zeitraum';
 export const ZUSTAND = 'input_select.zellen_zustand';
+
+/** Anzeige der Helferwerte: Laden und Entladen heissen in der Karte Charge und Discharge; der Helferwert bleibt (A01c). */
+const OPT_LABEL: Record<string, string> = { Laden: 'Charge', Entladen: 'Discharge' };
+const optLabel = (o: string): string => OPT_LABEL[o] ?? o;
 export const SPREIZUNG = 'input_number.zellen_mindestspreizung';
 export const STATUS = 'sensor.zellen_status';
 export const zellenSensor = (n: number): string => `sensor.zellen_pack_${n}`;
@@ -379,7 +383,7 @@ export class PackCardZellen extends LitElement {
           title=${ok ? id : `${id} fehlt oder ist nicht verfügbar`}
           @change=${(e: Event) => this._select(id, (e.target as HTMLSelectElement).value)}
         >
-          ${ok ? opts.map((o) => html`<option value=${o} ?selected=${o === s!.state}>${o}</option>`) : html`<option>${DASH}</option>`}
+          ${ok ? opts.map((o) => html`<option value=${o} ?selected=${o === s!.state}>${optLabel(o)}</option>`) : html`<option>${DASH}</option>`}
         </select></label
       >`;
     };

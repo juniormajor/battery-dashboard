@@ -7,13 +7,16 @@ import { val } from './ui';
 
 export const CELLS = 16;
 
-/** Fuehler in der Benennung der JK-App (E21, A01e „Temperaturfuehler“): ESPHome-Fuehler 3 = JK 5; Fuehler 5 = Spiegel des IC, entfaellt. */
+/**
+ * Fuehler in der Benennung der JK-App (E21, A01e „Temperaturfuehler“): IC ist die MOSFET-Temperatur, ESPHome-Fuehler 3
+ * ist JK T5, 4 ist T4; ESPHome-Fuehler 5 ist JK T3, ein Spiegel des IC, und entfaellt.
+ */
 export const TEMPS: [string, string][] = [
   ['IC', 'mosfet_temperature'],
-  ['1', 'temperature_sensor_1'],
-  ['2', 'temperature_sensor_2'],
-  ['4', 'temperature_sensor_4'],
-  ['5', 'temperature_sensor_3'],
+  ['T1', 'temperature_sensor_1'],
+  ['T2', 'temperature_sensor_2'],
+  ['T4', 'temperature_sensor_4'],
+  ['T5', 'temperature_sensor_3'],
 ];
 
 export interface MaxTemp {
@@ -63,7 +66,7 @@ export function packLeds(hass: Hass | undefined, p: PackConfig, fresh: boolean, 
   return html`<span class="leds">
     ${led('run', fresh, 'RUN', fresh ? 'Daten frisch' : `keine Daten seit über ${STALE_S} s`)}
     ${led('alm', alarm, 'ALM', alarm ? 'Fehlertext des BMS' : 'kein Fehlertext')}
-    ${led('bal', bal, 'BAL', bal ? 'Balancer aktiv' : 'Balancer ruht')} ${led('em', em, 'EMG', em ? 'Notbetrieb an' : 'Notbetrieb aus')}
+    ${led('bal', bal, 'BAL', bal ? 'Balancer aktiv' : 'Balancer ruht')} ${led('em', em, 'EMG', em ? 'Emergency an' : 'Emergency aus')}
   </span>`;
 }
 
@@ -119,7 +122,7 @@ export interface BalancerState {
 
 /**
  * sensor.pv_pack_<n>_balancer_status_bitmask. Die Komponente jk_bms_ble legt dort das Byte „Balancing action“ ab
- * (0 aus, 1 Balancer beim Laden, 2 Balancer beim Entladen; jk_bms_ble.cpp und docs/protocol-design-ble.md,
+ * (0 aus, 1 Balancer bei Charge, 2 Balancer bei Discharge; jk_bms_ble.cpp und docs/protocol-design-ble.md,
  * abgerufen 2026-11-01), keine Zellmaske. Der aktive Balancer arbeitet von der hoechsten zur niedrigsten Zelle;
  * markiert werden darum bei einem Wert ungleich 0 diese beiden Zellen (wie im Mockup).
  */
@@ -129,9 +132,186 @@ export function balancerState(hass: Hass | undefined, p: PackConfig, ext: Extrem
   const raw = Math.round(v);
   if (raw === 0) return { raw, cells: [], title: 'Balancer ruht' };
   const cells = [ext.max, ext.min].filter((c): c is number => c !== undefined);
-  const what = raw === 1 ? 'Balancer beim Laden aktiv' : raw === 2 ? 'Balancer beim Entladen aktiv' : `Balancer-Status ${raw}`;
+  const what = raw === 1 ? 'Balancer aktiv (Charge)' : raw === 2 ? 'Balancer aktiv (Discharge)' : `Balancer-Status ${raw}`;
   return { raw, cells, title: `${what}: höchste und niedrigste Zelle` };
 }
+
+/**
+ * Untere Zeile des Gehaeuses wie am realen Pack (E17): links zweimal Plus (orange), in der Mitte die Lampen
+ * RUN/ALM/BAL/EMG wie die LED-Leiste der BMS-Platine, rechts zweimal Minus.
+ */
+export function caseBottom(leds: TemplateResult): TemplateResult {
+  return html`<div class="case-bot">
+    <span class="terms" aria-hidden="true"><span class="term pos"></span><span class="term pos"></span></span>
+    ${leds}
+    <span class="terms" aria-hidden="true"><span class="term neg"></span><span class="term neg"></span></span>
+  </div>`;
+}
+
+/**
+ * Gehaeuse nach dem realen Pack (E17, E19): oben das Typenschild in der Mitte, BLE-Pegel und Datenalter rechts; darunter
+ * SoC-Batterie und der Bildschirm im Rahmen; unten Polkappen und Lampen. Gemeinsam fuer speicher und die Packansicht.
+ */
+export const caseStyles = css`
+  .case {
+    position: relative;
+    background: var(--pc-card);
+    border: 2px solid var(--pc-line);
+    border-radius: 8px;
+    padding: 6px 10px 0;
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+  .case.soc-lo {
+    border-color: var(--pc-bad);
+  }
+  .case.soc-hi {
+    border-color: var(--pc-ok);
+  }
+  .case-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+  .case-top .plate-w {
+    grid-column: 2;
+  }
+  .case-top .ble {
+    grid-column: 3;
+    justify-self: end;
+  }
+  .plate-w {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .plate {
+    border: 1px solid color-mix(in srgb, var(--pc-plate-fg) 22%, transparent);
+    background: var(--pc-plate);
+    color: var(--pc-plate-fg);
+    border-radius: 2px;
+    padding: 1px 12px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+  }
+  button.plate {
+    cursor: pointer;
+  }
+  button.plate:hover {
+    box-shadow: 0 0 0 2px var(--pc-accent);
+  }
+  button.plate:focus-visible {
+    outline: 2px solid var(--pc-accent);
+    outline-offset: 2px;
+  }
+  .case-mid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+  }
+  .soc {
+    display: grid;
+    justify-items: center;
+    gap: 1px;
+    text-align: center;
+  }
+  .soc svg {
+    display: block;
+  }
+  .soc b {
+    white-space: nowrap;
+  }
+  .soc .soh {
+    color: var(--pc-fg2);
+    white-space: nowrap;
+  }
+  /* Bildschirm im dunklen Rahmen wie das Fenster des BMS-Displays */
+  .bezel {
+    border: 4px solid var(--pc-bezel);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-bezel) 60%, transparent);
+    min-width: 0;
+  }
+  .bezel .scr {
+    border: 0;
+    border-radius: 2px;
+  }
+  /* untere Zeile: Polkappen stehen auf der Unterkante, darunter der Kabelansatz */
+  .case-bot {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px;
+    min-width: 0;
+  }
+  .case-bot .leds {
+    justify-self: center;
+    align-self: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 2px;
+    padding-bottom: 4px;
+  }
+  .terms {
+    display: inline-flex;
+    gap: 6px;
+    padding: 0 4px;
+  }
+  .term {
+    position: relative;
+    width: 24px;
+    height: 17px;
+    margin-bottom: 6px;
+    border-radius: 5px 5px 3px 3px;
+    flex: none;
+  }
+  .term::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    width: 10px;
+    bottom: -6px;
+    height: 6px;
+    background: var(--pc-term-neg);
+  }
+  .term.pos {
+    background: var(--pc-term-pos);
+  }
+  .term.neg {
+    background: var(--pc-term-neg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-fg3) 35%, transparent);
+  }
+  .term.pos::after {
+    content: '+';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .term.neg::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 7px;
+    height: 3px;
+    border-radius: 1px;
+    background: #d9d9d9;
+  }
+`;
 
 /** Stile von Lampen, BLE-Anzeige, Master-Abzeichen und Bildschirm-Toenung, gemeinsam fuer Gehaeuse und Packansicht. */
 export const packPartStyles = css`

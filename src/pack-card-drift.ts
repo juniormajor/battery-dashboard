@@ -264,7 +264,7 @@ export class PackCardDrift extends LitElement {
     return html`<div class="box drift">
       <h3>Drift der Leitzellen · Pack ${n || DASH}</h3>
       <p>
-        Tageswerte der Abweichung der jeweils führenden Zelle vom Packmittel, Laden, gleitend über 30 Tage (fest, unabhängig
+        Tageswerte der Abweichung der jeweils führenden Zelle vom Packmittel, Charge, gleitend über 30 Tage (fest, unabhängig
         von den Filtern). Wandert eine Linie von 0 weg, entfernt sich die Zelle vom Pack.
       </p>
       <div class="leg">${lead('hoch')} ${lead('tief')}</div>

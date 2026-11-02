@@ -1,9 +1,9 @@
-// Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur, WLAN, Laufzeit, Watchdog-Neustarts)
+// Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur mit Thermometer und „ESP“, WLAN, Laufzeit)
 // und „ESP neu starten“ mit einer Sekunde Halten (E7). Diagnose-IDs ohne Bereichspraefix nach A01b E15.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, StackConfig, isAvailable, numberOf, secondsOf, stackDiagEntity, stackEntity } from './entities';
-import { DASH, num, snum, uptimeText } from './format';
-import { fallback, sharedStyles, val } from './ui';
+import { num, snum, uptimeText } from './format';
+import { fallback, sharedStyles, tempLabel, val } from './ui';
 
 export class PackCardStackHead extends LitElement {
   static properties = {
@@ -55,17 +55,14 @@ export class PackCardStackHead extends LitElement {
       const temp = stackDiagEntity(s, 'internal_temperature');
       const wifi = stackDiagEntity(s, 'wifi_signal_strength');
       const up = stackDiagEntity(s, 'uptime_sensor');
-      const wdr = stackEntity(s, null, 'sensor', 'watchdog_reboots');
       const restart = stackEntity(s, null, 'button', 'restart');
-      const wdrN = numberOf(h, wdr);
       const canPress = isAvailable(h, restart) && typeof h?.callService === 'function';
       return html`<div class="h">
         <span class="name">${st.name ?? `Stack ${s}`}</span>
         <span class="esp">
-          <span>ESP ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
+          <span>${tempLabel('ESP', false)} ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
           <span>WLAN ${val(this, h, wifi, snum(numberOf(h, wifi), 0, 'dBm'))}</span>
           <span>Laufzeit ${val(this, h, up, uptimeText(secondsOf(h, up)))}</span>
-          <span>Neustarts ${val(this, h, wdr, wdrN === undefined ? DASH : String(Math.round(wdrN)))}</span>
         </span>
         <span class="sp"></span>
         <pack-card-hold

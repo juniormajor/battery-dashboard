@@ -56,7 +56,7 @@ export function uptimeText(sec: number | undefined): string {
   return `${m} min`;
 }
 
-/** Restzeit als m:ss, ab einer Stunde h:mm:ss (Notbetrieb-Restzeit). */
+/** Restzeit als m:ss, ab einer Stunde h:mm:ss (Emergency-Restzeit). */
 export function clock(sec: number | undefined): string {
   if (sec === undefined || !Number.isFinite(sec) || sec < 0) return DASH;
   const s = Math.round(sec);

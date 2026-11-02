@@ -34,19 +34,18 @@ export interface GroupLine {
   nosep?: boolean;
 }
 
-/** „Bezeichnung: Wert / Wert / Wert“, Spalten buendig, Zahlen rechtsbuendig (E21). */
+/**
+ * „Bezeichnung: Wert / Wert / Wert“ (E21): Bezeichnungen buendig in einer Spalte, die Werte einer Zeile direkt dahinter
+ * linksbuendig, getrennt durch „/“. Keine Wertspalten ueber Zeilen hinweg, damit verschieden lange Werte keine Luecken reissen.
+ */
 export function group(lines: GroupLine[], cls = ''): TemplateResult {
   return html`<div class="grp ${cls}">
-    ${lines.map((l) =>
-      l.span
-        ? html`<span class="gk">${l.k}</span><span class="gv span">${l.v[0]}</span>`
-        : html`<span class="gk">${l.k}</span>${[0, 1, 2].map(
-            (i) =>
-              html`<span class="gv">${l.v[i] ?? ''}</span>${i < 2
-                ? html`<span class="gs">${l.v[i + 1] !== undefined && !(i === 1 && l.nosep) ? '/' : ''}</span>`
-                : ''}`,
-          )}`,
-    )}
+    ${lines.map((l) => {
+      const vs = l.v.filter((x) => x !== undefined);
+      return html`<span class="gk">${l.k}</span><span class="gv ${l.span ? 'span' : ''}"
+        >${vs.map((x, i) => html`${i > 0 ? (i === 2 && l.nosep ? html` ` : html`<span class="gs">/</span>`) : ''}${x}`)}</span
+      >`;
+    })}
   </div>`;
 }
 
@@ -55,6 +54,14 @@ export const thermo = html`<svg class="ico" viewBox="0 0 12 20" role="img" aria-
   <circle cx="6" cy="15" r="2" fill="currentColor"></circle>
   <path d="M6 8v6" stroke="currentColor" stroke-width="1.6"></path>
 </svg>`;
+
+/**
+ * Temperaturbezeichnung mit Thermometer (E20, E21): „max“ nur bei einem echten Maximum ueber mehrere Fuehler,
+ * sonst der Fuehler selbst (IC, T1, T2, T4, T5, ESP).
+ */
+export function tempLabel(what: string, colon = true): TemplateResult {
+  return html`<span class="tl">${thermo}${what}${colon ? ':' : ''}</span>`;
+}
 
 /** Ansichtspfad: absolut ab „/“, sonst relativ zum aktuellen Dashboard (/<dashboard-url>/<pfad>). */
 export function viewPath(p: string): string {
@@ -134,6 +141,12 @@ export const themeVars = css`
     --pc-bad: var(--pack-card-bad-color, #c62828);
     --pc-bal: var(--pack-card-bal-color, #00838f);
     --pc-low: var(--pack-card-low-color, #1f63b8);
+    /* Gehaeuse nach dem realen Pack (E17): Typenschild, Rahmen des Bildschirms, Polkappen Plus (orange) und Minus */
+    --pc-plate: var(--pack-card-plate-color, #f7f7f5);
+    --pc-plate-fg: var(--pack-card-plate-text-color, #161616);
+    --pc-bezel: var(--pack-card-bezel-color, #34373b);
+    --pc-term-pos: var(--pack-card-terminal-plus-color, #e8661c);
+    --pc-term-neg: var(--pack-card-terminal-minus-color, #2a2c2f);
   }
   :host([dark]) {
     --pc-ok: var(--pack-card-ok-color-dark, #5cc68b);
@@ -142,6 +155,11 @@ export const themeVars = css`
     --pc-bad: var(--pack-card-bad-color-dark, #f06663);
     --pc-bal: var(--pack-card-bal-color-dark, #3fd2de);
     --pc-low: var(--pack-card-low-color-dark, #6aa9f2);
+    --pc-plate: var(--pack-card-plate-color-dark, #e4e4e0);
+    --pc-plate-fg: var(--pack-card-plate-text-color-dark, #161616);
+    --pc-bezel: var(--pack-card-bezel-color-dark, #050607);
+    --pc-term-pos: var(--pack-card-terminal-plus-color-dark, #f07a35);
+    --pc-term-neg: var(--pack-card-terminal-minus-color-dark, #0c0d0e);
   }
 `;
 
@@ -235,36 +253,45 @@ export const sharedStyles = css`
     border-radius: 8px;
   }
 
-  /* Gruppe nach E21: Bezeichnung | Wert | / | Wert | / | Wert */
+  /* Gruppe nach E21: Bezeichnung | Werte der Zeile, linksbuendig hinter der Bezeichnungsspalte */
   .grp {
     display: grid;
-    grid-template-columns: max-content auto max-content auto max-content auto;
-    column-gap: 5px;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 10px;
     row-gap: 3px;
-    justify-content: safe center;
+    justify-content: start;
     align-items: baseline;
-    align-content: center;
+    align-content: start;
     font-size: 13.5px;
     line-height: 1.4;
     min-width: 0;
-    overflow-x: auto;
   }
   .grp .gk {
     color: var(--pc-fg2);
-    padding-right: 6px;
     white-space: nowrap;
   }
   .grp .gv {
-    text-align: right;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 5px;
+    min-width: 0;
     white-space: nowrap;
-  }
-  .grp .gv.span {
-    grid-column: 2 / -1;
-    white-space: normal;
   }
   .grp .gs {
     color: var(--pc-fg3);
-    text-align: center;
+  }
+  .nw {
+    white-space: nowrap;
+  }
+  .tl {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .tl .ico {
+    align-self: center;
   }
 `;
 

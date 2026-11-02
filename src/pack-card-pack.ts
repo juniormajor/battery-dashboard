@@ -1,19 +1,20 @@
 // Ansicht pack (A01d E19): ein Pack aus input_select.zellen_pack (E5, E6), im Aufbau des Gehaeuses aus E17 in gross.
-// Kopf mit Ruecklink, Name, Master-Abzeichen, Lampen, BLE-Pegel, Datenalter, Stack, Notbetrieb-Restzeit, Fehlertext (E8),
-// Zellanalyse und Packwechsel; fuenf Schalter in einer Zeile (E12); SoC-Balken und Werte in zwei Bloecken (E21);
-// Zellblock (eigenes Element); BLE-Diagnose; unten Notbetrieb und BMS-Neustart mit einer Sekunde Halten (E7).
+// Kopf mit Ruecklink, Name, Master-Abzeichen, Stack, Emergency-Restzeit, Fehlertext (E8), Zellanalyse und Packwechsel;
+// fuenf Schalter in einer Zeile (E12); Gehaeuse mit Lampen, Typenschild, BLE-Pegel und Datenalter, SoC-Batterie und
+// Bildschirm mit den Werten in zwei Bloecken (E21), unten Polkappen; Zellblock (eigenes Element); BLE-Diagnose;
+// unten Emergency und BMS-Neustart mit einer Sekunde Halten (E7).
 // Jeder Block in eigenem try/catch mit sichtbarem Rueckfall (E10), Zustaende nur ueber die Guards aus entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
 import { DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
-import { band, balancerState, bleInfo, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, CELLS } from './pack-parts';
-import { battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, thermo, val, viewPath } from './ui';
+import { band, balancerState, bleInfo, caseStyles, deltaMv, extremeCells, maxTemp, packAge, packLeds, packPartStyles, caseBottom, CELLS } from './pack-parts';
+import { battSvg, fallback, group, navigate, selectPack, sharedStyles, switchStyles, tempLabel, val, viewPath } from './ui';
 
 interface SwitchDef {
   key: string;
   label: string;
   title: string;
-  /** Ausschalten nur mit einer Sekunde Halten (Ergaenzung zu E7: Laden, Entladen, Bluetooth) */
+  /** Ausschalten nur mit einer Sekunde Halten (Ergaenzung zu E7: Charge, Discharge, Bluetooth) */
   guard: boolean;
   /** wirkt am ESP, nicht am BMS: bleibt bedienbar, wenn das Pack keine Daten liefert (A01d-12) */
   esp?: boolean;
@@ -21,8 +22,8 @@ interface SwitchDef {
 
 /** Fuenf Schalter (E19; Low-Balance entfaellt seit A01b E28). */
 const SWITCHES: SwitchDef[] = [
-  { key: 'charging', label: 'Laden', title: 'Laden', guard: true },
-  { key: 'discharging', label: 'Entladen', title: 'Entladen', guard: true },
+  { key: 'charging', label: 'Charge', title: 'Charge', guard: true },
+  { key: 'discharging', label: 'Discharge', title: 'Discharge', guard: true },
   { key: 'balancer', label: 'Balancer', title: 'Balancer', guard: false },
   { key: 'charging_float_mode', label: 'Float', title: 'Float-Modus', guard: false },
   { key: 'enable_bluetooth_connection', label: 'Bluetooth', title: 'Bluetooth (Aus trennt das Pack)', guard: true, esp: true },
@@ -65,6 +66,7 @@ export class PackCardPack extends LitElement {
   static styles = [
     sharedStyles,
     packPartStyles,
+    caseStyles,
     switchStyles,
     css`
       :host {
@@ -139,39 +141,36 @@ export class PackCardPack extends LitElement {
         display: block;
         min-width: 0;
       }
-      .pbig {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        gap: 18px;
-        align-items: start;
+      .case {
+        padding: 8px 14px 0;
+        gap: 8px;
       }
-      .batt {
+      .plate {
+        font-size: 17px;
+        padding: 2px 16px;
+      }
+      .case-mid {
+        gap: 16px;
+      }
+      .soc {
         width: 104px;
-        display: grid;
-        justify-items: center;
-        gap: 2px;
-        text-align: center;
       }
-      .batt svg {
+      .soc svg {
         width: 88px;
         height: 164px;
-        display: block;
       }
-      .batt b {
+      .soc b {
         font-size: 16px;
-        white-space: nowrap;
       }
-      .batt .soh {
+      .soc .soh {
         font-size: 11.5px;
-        color: var(--pc-fg2);
-        white-space: nowrap;
       }
-      .grps {
+      .scr.grps {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: repeat(2, minmax(0, max-content));
+        justify-content: start;
         gap: 8px;
         padding: 8px;
-        max-width: 780px;
       }
       .grps .grp {
         border: 1px solid var(--pc-line);
@@ -207,34 +206,38 @@ export class PackCardPack extends LitElement {
       .holds pack-card-hold::part(button) {
         padding: 10px;
       }
-      @container (max-width: 639px) {
-        .pbig {
-          gap: 10px;
+      @container (max-width: 719px) {
+        .scr.grps {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 6px;
+          padding: 5px;
         }
-        .batt {
+      }
+      @container (max-width: 639px) {
+        .case {
+          padding: 6px 8px 0;
+        }
+        .case-mid {
+          gap: 8px;
+        }
+        .soc {
           width: 62px;
         }
-        .batt svg {
+        .soc svg {
           width: 50px;
           height: 93px;
         }
-        .batt b {
+        .soc b {
           font-size: 12px;
         }
-        .grps {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 6px;
-          padding: 4px;
-        }
         .grps .grp {
-          font-size: 11px;
-          column-gap: 2px;
-          padding: 4px 5px;
+          font-size: 11.5px;
+          column-gap: 6px;
+          padding: 4px 6px;
         }
         .grps .grp .gk {
           white-space: normal;
-          max-width: 6.5em;
-          padding-right: 3px;
+          max-width: 7.5em;
         }
       }
       @container (max-width: 519px) {
@@ -283,7 +286,7 @@ export class PackCardPack extends LitElement {
         ${this.block('Kopf', () => this.renderHead(cur))} ${this.block('Schalter', () => this.renderSwitches(p))}
         ${this.block('Packwerte', () => this.renderValues(p))}
         <pack-card-cells .hass=${this.hass} .pack=${p}></pack-card-cells>
-        ${this.block('BLE-Diagnose', () => this.renderDiag(p))} ${this.block('Notbetrieb und Neustart', () => this.renderHolds(p))}
+        ${this.block('BLE-Diagnose', () => this.renderDiag(p))} ${this.block('Emergency und Neustart', () => this.renderHolds(p))}
       </div>`;
     } catch (e) {
       return fallback('Ansicht pack', e);
@@ -323,7 +326,6 @@ export class PackCardPack extends LitElement {
     const p = cur.p;
     const n = p.pack;
     const E = (dom: string, key: string) => packEntity(p, dom, key);
-    const { age, fresh } = packAge(h, p, this.now);
     const errId = E('sensor', 'errors');
     const err = textOf(h, errId);
     const incomplete = numberOf(h, E('sensor', 'state_of_charge')) === undefined || numberOf(h, E('sensor', 'total_voltage')) === undefined;
@@ -349,10 +351,9 @@ export class PackCardPack extends LitElement {
     return html`<div class="head">
       <button type="button" class="link" @click=${() => navigate(viewPath(this.speicherPath))}>← Speicher</button>
       <h2>Pack ${n}</h2>
-      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''} ${packLeds(h, p, fresh, !!err)}
-      ${bleInfo(this, h, p, fresh, age)}
+      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}
       <span class="tag mut" title=${`Stack ${s}`}>${stackName}</span>
-      ${cd !== undefined && cd > 0 ? val(this, h, cdId, html`<span class="tag warn">Notbetrieb ${clock(cd)}</span>`) : ''}
+      ${cd !== undefined && cd > 0 ? val(this, h, cdId, html`<span class="tag warn">Emergency ${clock(cd)}</span>`) : ''}
       ${
         err
           ? val(this, h, errId, html`<span class="tag bad errtxt">${err}</span>`)
@@ -406,7 +407,7 @@ export class PackCardPack extends LitElement {
         @hold-complete=${() => this._switch(id, 'turn_off', true, bms)}
       ></pack-card-hold>`;
     }
-    // Einschalten (bei Laden, Entladen, Bluetooth) und Balancer/Float mit einfachem Tippen
+    // Einschalten (bei Charge, Discharge, Bluetooth) und Balancer/Float mit einfachem Tippen
     const service = d.guard ? 'turn_on' : 'toggle';
     return html`<button
       type="button"
@@ -430,7 +431,7 @@ export class PackCardPack extends LitElement {
     const E = (key: string) => packEntity(p, 'sensor', key);
     const socId = E('state_of_charge');
     const soc = numberOf(h, socId);
-    const { fresh } = packAge(h, p, this.now);
+    const { age, fresh } = packAge(h, p, this.now);
     const err = textOf(h, E('errors'));
     const dmv = deltaMv(h, p);
     const tint = !fresh ? 't-off' : err ? 't-bad' : band(dmv);
@@ -447,14 +448,9 @@ export class PackCardPack extends LitElement {
         ? html`<span class="src">${val(this, h, bmId, `(${DASH})`)}</span>`
         : undefined;
     const left = group([
-      {
-        k: html`${thermo} max:`,
-        v: [
-          tMax
-            ? html`${val(this, h, tMax.id, num(tMax.v, 1, '°C'))} <span class="src">(${tMax.s})</span>`
-            : val(this, h, E('mosfet_temperature'), DASH),
-        ],
-      },
+      tMax
+        ? { k: tempLabel(tMax.s), v: [val(this, h, tMax.id, num(tMax.v, 1, '°C'))] }
+        : { k: tempLabel('IC'), v: [val(this, h, E('mosfet_temperature'), DASH)] },
       {
         k: 'Zellen min / Ø / max:',
         v: [
@@ -496,13 +492,22 @@ export class PackCardPack extends LitElement {
         ],
       },
     ]);
-    return html`<div class="pbig">
-      <div class="batt">
-        ${val(this, h, socId, battSvg(soc))} ${val(this, h, socId, html`<b>SoC ${num(soc, 1, '%')}</b>`)}
-        ${val(this, h, E('state_of_health'), html`<span class="soh">SoH ${num(numberOf(h, E('state_of_health')), 0, '%')}</span>`)}
+    return html`<article class="case" aria-label=${`Pack ${n}`}>
+      <div class="case-top">
+        <span class="plate-w"
+          ><span class="plate">Pack ${n}</span>${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}</span
+        >
+        ${bleInfo(this, h, p, fresh, age)}
       </div>
-      <div class="grps scr ${tint}">${left}${right}</div>
-    </div>`;
+      <div class="case-mid">
+        <div class="soc">
+          ${val(this, h, socId, battSvg(soc))} ${val(this, h, socId, html`<b>SoC ${num(soc, 1, '%')}</b>`)}
+          ${val(this, h, E('state_of_health'), html`<span class="soh">SoH ${num(numberOf(h, E('state_of_health')), 0, '%')}</span>`)}
+        </div>
+        <div class="bezel"><div class="grps scr ${tint}">${left}${right}</div></div>
+      </div>
+      ${caseBottom(packLeds(h, p, fresh, !!err))}
+    </article>`;
   }
 
   /** BLE-Diagnose (Entity-Ableitung): fehlende Entitaeten werden uebersprungen, damit neue nach einem Flash ohne Nacharbeit erscheinen (E10). */
@@ -554,7 +559,8 @@ export class PackCardPack extends LitElement {
     return html`<div class="holds">
       <pack-card-hold
         class="em"
-        .label=${emOn ? 'Notbetrieb aus' : 'Notbetrieb ein'}
+        plain
+        .label=${'Emergency'}
         .active=${emOn}
         .disabled=${!!emReason}
         .reason=${emReason}
@@ -593,7 +599,7 @@ export class PackCardPack extends LitElement {
   private _emergency(id: string, p: PackConfig): void {
     if (this.reasonFor(id, p)) return;
     const on = this.hass?.states[id]?.state === 'on';
-    this._call('switch', on ? 'turn_off' : 'turn_on', id, 'Notbetrieb');
+    this._call('switch', on ? 'turn_off' : 'turn_on', id, 'Emergency');
   }
 
   private _restart(id: string, p: PackConfig): void {

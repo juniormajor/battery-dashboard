@@ -1,8 +1,9 @@
-// Zellblock der Packansicht (A01d E19): 16 Zellen in zwei Spalten (1–8 links, 9–16 rechts wie jk-bms-card) mit
-// Spannung und Innenwiderstand, hoechste Zelle gruen, niedrigste rot umrandet, Hintergrund nach Abweichung vom
-// Packmittel (Mockup devClass). Bei Balancing-Strom ungleich 0 die Linie von der hoechsten zur niedrigsten Zelle als
-// SVG ueber dem Raster (jk-bms-card _updateFlowLine), die Zellen des Balancers pulsierend markiert. Ohne Begleitzeile
-// zu Minimum, Maximum und Delta (E19). Eigenes Element, damit ein Fehler auf den Block begrenzt bleibt (E10).
+// Zellblock der Packansicht (A01d E19): 16 Zellen in zwei Spalten (1–8 links, 9–16 rechts wie jk-bms-card), je Zelle
+// „Nr Spannung / Innenwiderstand“ ohne Kopfzeile, hoechste Zelle gruen, niedrigste rot umrandet, Hintergrund nach
+// Abweichung vom Packmittel (Mockup devClass). Bei Balancing-Strom ungleich 0 der Stromfluss von der hoechsten zur
+// niedrigsten Zelle als SVG ueber dem Raster (jk-bms-card _updateFlowLine): Leitung, wandernde Punkte in Flussrichtung
+// und Pfeil an der Zielzelle; die Zellen des Balancers pulsierend markiert. Ohne Begleitzeile zu Minimum, Maximum und
+// Delta (E19). Eigenes Element, damit ein Fehler auf den Block begrenzt bleibt (E10).
 import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, numberOf, packEntity, unitOf } from './entities';
 import { num, packCell, signed } from './format';
@@ -57,23 +58,14 @@ export class PackCardCells extends LitElement {
         column-gap: 30px;
         row-gap: 3px;
       }
-      .ch {
-        display: flex;
-        justify-content: space-between;
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--pc-fg3);
-        padding: 0 8px;
-      }
       .cell {
         position: relative;
         z-index: 2;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 6px;
-        padding: 2px 6px;
+        align-items: baseline;
+        justify-content: flex-start;
+        gap: 5px;
+        padding: 2px 8px;
         border-radius: 6px;
         border: 1px solid var(--pc-line);
         background: var(--pc-card);
@@ -96,8 +88,10 @@ export class PackCardCells extends LitElement {
       .cell .cv {
         font-weight: 500;
       }
+      .cell .gs {
+        color: var(--pc-fg3);
+      }
       .cell .cr {
-        font-size: 12px;
         color: var(--pc-fg2);
         white-space: nowrap;
       }
@@ -138,21 +132,30 @@ export class PackCardCells extends LitElement {
         z-index: 3;
         overflow: visible;
       }
-      .flow path {
+      /* Stromfluss des Balancers: Leitung, Punkte wandern von der hoechsten zur niedrigsten Zelle, Pfeil am Ziel */
+      .flow .base {
         fill: none;
-        stroke: var(--pc-bal);
-        stroke-width: 3;
+        stroke: color-mix(in srgb, var(--pc-bal) 30%, transparent);
+        stroke-width: 7;
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-dasharray: 9 7;
-        animation: dash 1.2s linear infinite;
       }
+      .flow .dots {
+        fill: none;
+        stroke: var(--pc-bal);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 0 12;
+        animation: flow 0.6s linear infinite;
+      }
+      .flow .arrow,
       .flow circle {
         fill: var(--pc-bal);
       }
-      @keyframes dash {
+      @keyframes flow {
         to {
-          stroke-dashoffset: -32;
+          stroke-dashoffset: -12;
         }
       }
       @container (max-width: 420px) {
@@ -162,9 +165,6 @@ export class PackCardCells extends LitElement {
         .grid {
           column-gap: 16px;
           row-gap: 2px;
-        }
-        .ch {
-          padding: 0 5px;
         }
         .cell {
           padding: 1px 4px;
@@ -178,13 +178,16 @@ export class PackCardCells extends LitElement {
           font-size: 10.5px;
         }
         .cell .cr {
-          font-size: 11px;
+          font-size: 11.5px;
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        .flow path,
+        .flow .dots,
         .cell.bm {
           animation: none;
+        }
+        .flow .dots {
+          stroke-dasharray: 0 8;
         }
       }
     `,
@@ -264,25 +267,27 @@ export class PackCardCells extends LitElement {
         .filter(Boolean)
         .join(' · ');
       return html`<div class="cell ${cls}" data-cell=${i} title=${title}>
-        ${val(this, h, vId(i), html`<span class="n">${pad2(i)}</span><span class="cv">${num(v, 3, 'V')}</span>`, 'uv')}
-        ${val(this, h, rId(i), num(r, 0, 'mΩ'), 'cr')}
+        ${val(this, h, vId(i), html`<span class="n">${pad2(i)}</span><span class="cv">${num(v, 3, 'V')}</span>`, 'uv')}<span
+          class="gs"
+          >/</span
+        >${val(this, h, rId(i), num(r, 0, 'mΩ'), 'cr')}
       </div>`;
     };
 
     const rows: TemplateResult[] = [];
     const half = CELLS / 2;
     for (let i = 1; i <= half; i++) rows.push(cell(i), cell(i + half));
-    const head = html`<div class="ch" aria-hidden="true"><span>Nr · U</span><span>R</span></div>`;
     return html`<section class="box" aria-label=${`Zellen Pack ${n}`}>
       <div class="title">Zellen</div>
       <div class="grid">
-        ${head}${head}${rows}
+        ${rows}
         ${
           this._flow
             ? html`<svg class="flow" aria-hidden="true">
-                <path d=""></path>
+                <path class="base" d=""></path>
+                <path class="dots" d=""></path>
                 <circle class="a" r="4"></circle>
-                <circle class="b" r="4"></circle>
+                <polygon class="arrow" points=""></polygon>
               </svg>`
             : ''
         }
@@ -298,14 +303,17 @@ export class PackCardCells extends LitElement {
     });
   }
 
-  /** Linie wie im Mockup: vom inneren Rand der hoechsten Zelle zur Spaltenfuge, senkrecht, zum inneren Rand der niedrigsten. */
+  /**
+   * Fluss wie im Mockup: vom inneren Rand der hoechsten Zelle zur Spaltenfuge, senkrecht, zum inneren Rand der niedrigsten;
+   * am Start ein Punkt, am Ziel ein Pfeil in Flussrichtung.
+   */
   private _drawFlow(): void {
     try {
       const f = this._flow;
       const root = this.renderRoot;
       const grid = root.querySelector('.grid');
-      const path = root.querySelector('.flow path');
-      if (!f || !grid || !path) return;
+      const paths = root.querySelectorAll('.flow path');
+      if (!f || !grid || !paths.length) return;
       const a = grid.querySelector(`[data-cell="${f.max}"]`);
       const b = grid.querySelector(`[data-cell="${f.min}"]`);
       const left = grid.querySelector('[data-cell="1"]');
@@ -321,15 +329,18 @@ export class PackCardCells extends LitElement {
       };
       const s = inner(a);
       const t = inner(b);
-      path.setAttribute('d', `M${s.x},${s.y} H${gx} V${t.y} H${t.x}`);
+      // Pfeilspitze am Rand der Zielzelle, die Leitung endet an seiner Basis
+      const dir = t.x >= gx ? 1 : -1;
+      const L = 9;
+      const baseX = t.x - dir * L;
+      const d = `M${s.x},${s.y} H${gx} V${t.y} H${baseX}`;
+      paths.forEach((p) => p.setAttribute('d', d));
+      root.querySelector('.flow .arrow')?.setAttribute('points', `${t.x},${t.y} ${baseX},${t.y - 6} ${baseX},${t.y + 6}`);
       const ca = root.querySelector('.flow circle.a');
-      const cb = root.querySelector('.flow circle.b');
       ca?.setAttribute('cx', String(s.x));
       ca?.setAttribute('cy', String(s.y));
-      cb?.setAttribute('cx', String(t.x));
-      cb?.setAttribute('cy', String(t.y));
     } catch (e) {
-      console.warn('pack-card: Balancing-Linie', e);
+      console.warn('pack-card: Balancing-Fluss', e);
     }
   }
 }
