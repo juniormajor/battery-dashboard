@@ -1,7 +1,6 @@
 // Einstieg: registriert die Elemente einmal und traegt die Karte in den Kartenwaehler ein.
 import { PackCard } from './pack-card';
 import { PackCardTile } from './pack-card-tile';
-import { PackCardRow } from './pack-card-row';
 import { PackCardHold } from './pack-card-hold';
 import { PackCardBank } from './pack-card-bank';
 import { PackCardEmergency } from './pack-card-emergency';
@@ -22,7 +21,6 @@ define('pack-card-bank', PackCardBank);
 define('pack-card-emergency', PackCardEmergency);
 define('pack-card-stack-head', PackCardStackHead);
 define('pack-card-tile', PackCardTile);
-define('pack-card-row', PackCardRow);
 define('pack-card-cells', PackCardCells);
 define('pack-card-pack', PackCardPack);
 define('pack-card-drift', PackCardDrift);

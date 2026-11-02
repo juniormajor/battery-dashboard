@@ -10,7 +10,7 @@ export interface PackConfig {
 
 export interface StackConfig {
   stack: number;
-  /** im Editor frei waehlbarer Name (E17) */
+  /** in der Kartenkonfiguration frei waehlbarer Name (E17) */
   name?: string;
 }
 
