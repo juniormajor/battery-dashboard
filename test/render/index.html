@@ -3,15 +3,41 @@
 <head>
 <meta charset="utf-8" />
 <style>
+  /* default theme of the HA frontend (core-2026.11, home-assistant/frontend color.globals.ts, semantic.globals.ts,
+     typography.globals.ts, core.globals.ts): only the variables the card reads */
   :root {
+    --ha-font-family-body: Roboto, Noto, sans-serif;
+    --ha-font-size-xs: 10px;
+    --ha-font-size-s: 12px;
+    --ha-font-size-m: 14px;
+    --ha-font-size-l: 16px;
+    --ha-font-size-xl: 20px;
+    --ha-font-size-2xl: 24px;
+    --ha-font-weight-normal: 400;
+    --ha-font-weight-medium: 500;
+    --ha-line-height-normal: 1.6;
+    --ha-border-radius-sm: 4px;
+    --ha-border-radius-md: 8px;
+    --ha-border-radius-lg: 12px;
+    --ha-border-radius-pill: 9999px;
     --primary-text-color: #141414;
     --secondary-text-color: #5e5e5e;
     --divider-color: rgba(0, 0, 0, 0.12);
     --card-background-color: #ffffff;
-    --secondary-background-color: #f2f2f2;
-    --primary-color: #03a9f4;
+    --secondary-background-color: #e5e5e5;
+    --primary-color: #009ac7;
     --text-primary-color: #fff;
     --primary-background-color: #fafafa;
+    --success-color: #43a047;
+    --warning-color: #ffa600;
+    --error-color: #db4437;
+    --info-color: #039be5;
+    --amber-color: #ffc107;
+    --ha-color-fill-neutral-quiet-resting: #f3f3f3;
+    --ha-color-fill-primary-quiet-resting: #eff9fe;
+    --ha-color-on-success-normal: #036730;
+    --ha-color-on-warning-normal: #9d3800;
+    --ha-color-on-danger-normal: #b30532;
   }
   body.dark {
     --primary-text-color: #e1e1e1;
@@ -19,13 +45,17 @@
     --divider-color: rgba(225, 225, 225, 0.12);
     --card-background-color: #1c1c1c;
     --secondary-background-color: #282828;
-    --primary-color: #03a9f4;
     --primary-background-color: #111111;
+    --ha-color-fill-neutral-quiet-resting: #282828;
+    --ha-color-fill-primary-quiet-resting: #001721;
+    --ha-color-on-success-normal: #00ac49;
+    --ha-color-on-warning-normal: #f36d00;
+    --ha-color-on-danger-normal: #f3676c;
   }
   body {
     margin: 0;
     background: var(--primary-background-color);
-    font-family: Roboto, 'Segoe UI', Arial, sans-serif;
+    font-family: var(--ha-font-family-body);
     color: var(--primary-text-color);
   }
   .panel {
@@ -45,7 +75,7 @@
         super();
         const r = this.attachShadow({ mode: 'open' });
         r.innerHTML =
-          '<style>:host{display:block;background:var(--ha-card-background,var(--card-background-color));border-radius:12px;border:1px solid var(--divider-color);}</style><slot></slot>';
+          '<style>:host{display:block;background:var(--ha-card-background,var(--card-background-color));border-radius:var(--ha-card-border-radius,var(--ha-border-radius-lg));border:1px solid var(--ha-card-border-color,var(--divider-color));}</style><slot></slot>';
       }
     },
   );

@@ -72,87 +72,69 @@ export class PackCard extends LitElement {
       :host([view='zellen']) {
         max-width: none;
       }
+      /* the frame draws no card of its own: every group is its own surface in the style of ha-card (E26) */
       ha-card {
         display: block;
-        padding: 12px;
+        background: none;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
         color: var(--pc-fg);
       }
       .speicher {
         display: grid;
-        gap: 12px;
+        gap: 8px;
       }
       .head {
         display: flex;
         align-items: center;
-        gap: 6px 10px;
+        gap: 8px;
+        min-height: 40px;
         flex-wrap: wrap;
-      }
-      .head h2 {
-        font-size: 20px;
-        font-weight: 500;
-        margin: 0;
       }
       .head .sub {
         color: var(--pc-fg2);
-        font-size: 13px;
+        font-weight: var(--ha-font-weight-medium, 500);
       }
       /* cabinet: stacks side by side, below about 700 px (2 x 330 px) stacked; never wider than the card (R4) */
       .cab {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
-        gap: 14px;
+        gap: 8px;
+        margin-top: 8px;
       }
       .stack {
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
-        overflow: hidden;
-        min-width: 0;
-        background: repeating-linear-gradient(
-          90deg,
-          transparent 0 22px,
-          color-mix(in srgb, var(--pc-line) 35%, transparent) 22px 23px
-        );
         display: grid;
+        gap: 8px;
         align-content: start;
+        min-width: 0;
       }
       .packs {
         display: grid;
-        gap: 12px;
-        padding: 12px 10px 12px 14px;
-        min-width: 0;
+        gap: 8px;
+        padding: 8px;
       }
       .note {
-        font-size: 12.5px;
         color: var(--pc-fg2);
         margin: 0;
       }
       .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px 14px;
-        font-size: 12px;
+        gap: 4px 16px;
+        font-size: var(--pc-fs-s);
+        line-height: 1.2;
         color: var(--pc-fg2);
+        margin-top: 8px;
       }
       .legend i {
         display: inline-block;
         width: 12px;
         height: 12px;
-        border-radius: 3px;
+        border-radius: var(--pc-r-sm);
         vertical-align: -2px;
-        margin-right: 5px;
-        border: 1px solid var(--pc-line);
+        margin-right: 4px;
         box-sizing: border-box;
-      }
-      .hint {
-        color: var(--pc-fg2);
-      }
-      @media (max-width: 520px) {
-        ha-card {
-          padding: 8px;
-        }
-        .packs {
-          padding: 10px 6px 10px 10px;
-        }
       }
     `,
   ];
@@ -266,11 +248,11 @@ export class PackCard extends LitElement {
 
   private renderHead(): TemplateResult {
     return html`<div class="head">
-      <h2>Speicher</h2>
+      <h2 class="ttl">Speicher</h2>
       <span class="sub">${this._packs.length} Packs · ${this._stacks.length} Stacks</span>
       <span class="sp"></span>
       ${unitSwitch(this._unit, (u) => this._setUnit(u))}
-      <button type="button" class="link" @click=${() => navigate(viewPath(this._zellenPath))}>Zellanalyse →</button>
+      <button type="button" class="btn" @click=${() => navigate(viewPath(this._zellenPath))}>Zellanalyse</button>
     </div>`;
   }
 
@@ -307,7 +289,7 @@ export class PackCard extends LitElement {
         const mine = this._packs.filter((p) => stackOf(p) === s.stack);
         return html`<section class="stack" aria-label=${s.name ?? `Stack ${s.stack}`}>
           <pack-card-stack-head .hass=${this.hass} .stack=${s}></pack-card-stack-head>
-          <div class="packs">
+          <div class="packs surf">
             ${mine.length
               ? mine.map(
                   (p) =>

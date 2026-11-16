@@ -1,8 +1,8 @@
-// Enclosure of a pack (A01d E17, E21) modeled on the real pack in the PV room. Own element so that an error stays confined to
-// this pack (E10, R6). Top center the type plate "Pack n" (click target E4), right BLE level and
-// data age; below, left the SoC battery with SoC and SoH, right the screen in its bezel with the error text (E8),
+// Enclosure of a pack (A01d E17, E21, E26), a simplified image of the real pack in the PV room. Own element so that an error
+// stays confined to this pack (E10, R6). Top left the type plate "Pack n" (click target E4), right BLE level and
+// data age; below, left the SoC battery with SoC and SoH, right the value area with the error text (E8),
 // "U / I / P", "Kapazität" (remaining and full capacity in the unit of the bank display), "ΔU / I Bal" and the
-// highest temperature with its sensor; at the bottom terminal caps and lamps RUN/ALM/BAL/EMG.
+// highest temperature with its sensor; at the bottom the lamps RUN/ALM/BAL/EMG.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, ZELLEN_PACK, ageSeconds, numberOf, packEntity, stateOf, textOf } from './entities';
 import { CapUnit, DASH, num, snum } from './format';
@@ -58,52 +58,31 @@ export class PackCardTile extends LitElement {
       }
       .soc b,
       .soc .soh {
-        font-size: 11px;
+        font-size: var(--pc-fs-s);
       }
       .err {
         display: block;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 12px;
-        color: var(--pc-bad);
+        font-size: var(--pc-fs-s);
+        color: var(--pc-bad-on);
       }
       .err .v {
         display: inline;
         max-width: 100%;
       }
-      .scr {
-        padding: 6px 9px;
-      }
-      .scr .grp {
-        font-size: 12.5px;
-      }
-      @container (max-width: 359px) {
+      @container (max-width: 399px) {
         .case {
-          padding: 5px 7px 0;
+          padding: 8px;
         }
-        .case-top {
-          grid-template-columns: auto minmax(0, 1fr);
-        }
-        .case-top .plate-w {
-          grid-column: 1;
-        }
-        .case-top .ble {
-          grid-column: 2;
-        }
-        .terms {
-          gap: 4px;
-          padding: 0;
-        }
-        .term {
-          width: 20px;
-        }
-        .term::before {
-          left: 5px;
+        .case.soc-lo,
+        .case.soc-hi {
+          padding: 7px;
         }
         .case-mid {
-          gap: 7px;
+          gap: 8px;
         }
         .soc {
           min-width: 50px;
@@ -113,11 +92,11 @@ export class PackCardTile extends LitElement {
           height: 62px;
         }
         .scr {
-          padding: 4px 6px;
+          padding: 8px;
         }
         .scr .grp {
-          font-size: 11.5px;
-          column-gap: 6px;
+          font-size: var(--pc-fs-s);
+          column-gap: 8px;
         }
       }
     `,
@@ -181,7 +160,7 @@ export class PackCardTile extends LitElement {
       ? `Packansicht für Pack ${n}`
       : `Packansicht – ${ZELLEN_PACK} nicht verfügbar, die Ansicht zeigt das zuletzt gewählte Pack`;
     return html`<button type="button" class="plate" title=${title} @click=${this._openPack}>Pack ${n}</button>
-      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}`;
+      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">Master</span>` : ''}`;
   }
 
   private renderValues(dmv: number | undefined): TemplateResult {

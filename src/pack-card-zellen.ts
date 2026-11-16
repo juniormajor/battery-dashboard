@@ -93,43 +93,20 @@ export class PackCardZellen extends LitElement {
       .zv {
         container-type: inline-size;
         display: grid;
-        gap: 12px;
+        gap: 8px;
         min-width: 0;
       }
       .head {
         display: flex;
         align-items: center;
-        gap: 6px 10px;
+        gap: 8px;
+        min-height: 40px;
         flex-wrap: wrap;
-      }
-      .head h2 {
-        font-size: 20px;
-        font-weight: 500;
-        margin: 0;
       }
       .head .sub {
         color: var(--pc-fg2);
-        font-size: 13px;
+        font-weight: var(--ha-font-weight-medium, 500);
       }
-      .btn {
-        border: 1px solid var(--pc-line);
-        background: var(--pc-raise);
-        color: var(--pc-fg);
-        border-radius: 8px;
-        padding: 5px 11px;
-        cursor: pointer;
-        font: inherit;
-        font-size: 13px;
-        white-space: nowrap;
-      }
-      .btn:hover:not(:disabled) {
-        border-color: var(--pc-fg3);
-      }
-      .btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-      .btn:focus-visible,
       .filt select:focus-visible,
       .filt input:focus-visible,
       .kpi:focus-visible,
@@ -141,37 +118,32 @@ export class PackCardZellen extends LitElement {
       .filt {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 14px;
+        gap: 8px 16px;
         align-items: end;
-        padding: 10px;
-        border-radius: 10px;
-        background: var(--pc-raise);
+        padding: 12px 16px;
       }
       .filt label {
         display: grid;
-        gap: 3px;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--pc-fg3);
+        gap: 4px;
+        font-size: var(--pc-fs-s);
+        line-height: 1.2;
+        color: var(--pc-fg2);
       }
       .filt select,
       .filt input {
         font: inherit;
-        font-size: 13px;
+        font-size: var(--pc-fs-m);
         color: var(--pc-fg);
-        background: var(--pc-card);
-        border: 1px solid var(--pc-line);
-        border-radius: 7px;
-        padding: 5px 7px;
-        text-transform: none;
-        letter-spacing: 0;
+        background: var(--pc-raise);
+        border: 0;
+        border-radius: var(--pc-r-md);
+        padding: 8px 12px;
       }
       .filt input {
         width: 84px;
       }
       .filt .when {
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
         display: grid;
         gap: 2px;
@@ -181,12 +153,13 @@ export class PackCardZellen extends LitElement {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 8px;
       }
+      /* key figures as cards in the style of the tile card (E26) */
       .kpi {
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
+        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--pc-line));
+        border-radius: var(--pc-r-lg);
         padding: 8px 12px;
         display: grid;
-        gap: 1px;
+        gap: 2px;
         background: var(--pc-card);
         color: var(--pc-fg);
         text-align: left;
@@ -195,37 +168,35 @@ export class PackCardZellen extends LitElement {
         min-width: 0;
       }
       .kpi:hover:not(:disabled) {
-        border-color: var(--pc-fg3);
+        background: var(--pc-raise);
       }
       .kpi .lbl {
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--pc-fg3);
+        font-size: var(--pc-fs-m);
+        font-weight: var(--ha-font-weight-medium, 500);
+        color: var(--pc-fg);
       }
       .kpi .x {
-        font-size: 18px;
-        font-weight: 500;
+        font-size: var(--pc-fs-xl);
+        font-weight: var(--ha-font-weight-normal, 400);
+        line-height: 1.2;
         font-variant-numeric: tabular-nums;
       }
       .kpi .y {
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
       }
       .box {
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
-        padding: 10px;
+        padding: 12px 16px 16px;
         min-width: 0;
       }
       .box h3 {
-        font-size: 14px;
-        font-weight: 500;
-        margin: 0 0 2px;
+        font-size: var(--pc-fs-l);
+        font-weight: var(--ha-font-weight-normal, 400);
+        margin: 0 0 4px;
       }
       .box p {
         margin: 0 0 8px;
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
       }
       .hm {
@@ -240,7 +211,7 @@ export class PackCardZellen extends LitElement {
         grid-template-columns: 64px repeat(var(--n), minmax(0, 1fr));
         gap: 3px;
         align-items: stretch;
-        border-radius: 6px;
+        border-radius: var(--pc-r-md);
       }
       .hm-row.sel {
         outline: 2px solid var(--pc-accent);
@@ -248,7 +219,7 @@ export class PackCardZellen extends LitElement {
       }
       .hl {
         font: inherit;
-        font-size: 12px;
+        font-size: var(--pc-fs-s);
         display: flex;
         align-items: center;
         border: 0;
@@ -260,16 +231,16 @@ export class PackCardZellen extends LitElement {
         text-align: left;
       }
       .hm-head {
-        font-size: 10.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg3);
         text-align: center;
         font-variant-numeric: tabular-nums;
       }
       .hm-c {
         min-height: 28px;
-        border-radius: 4px;
+        border-radius: var(--pc-r-sm);
         font: inherit;
-        font-size: 10.5px;
+        font-size: var(--pc-fs-s);
         line-height: 1.1;
         display: grid;
         place-items: center;
@@ -292,7 +263,7 @@ export class PackCardZellen extends LitElement {
         display: none;
       }
       .tag {
-        font-size: 11.5px;
+        font-size: var(--pc-fs-s);
       }
       @container (max-width: 599px) {
         .wide {
@@ -308,10 +279,10 @@ export class PackCardZellen extends LitElement {
           grid-template-columns: 1fr 1fr;
         }
         .kpi {
-          padding: 6px 8px;
+          padding: 8px;
         }
         .kpi .x {
-          font-size: 16px;
+          font-size: var(--pc-fs-l);
         }
       }
     `,
@@ -361,11 +332,11 @@ export class PackCardZellen extends LitElement {
     const n = cur?.pack;
     return html`<div class="head">
       <button type="button" class="link" @click=${() => navigate(viewPath(this.speicherPath))}>← Speicher</button>
-      <h2>Zellanalyse</h2>
+      <h2 class="ttl">Zellanalyse</h2>
       <span class="sub">${this.packs.length * 16} Zellen · gewählt Pack ${n ?? DASH}</span>
       <span class="sp"></span>
       ${n !== undefined
-        ? html`<button type="button" class="link" @click=${() => navigate(viewPath(this.packPath))}>Pack ${n} →</button>`
+        ? html`<button type="button" class="btn" @click=${() => navigate(viewPath(this.packPath))}>Pack ${n}</button>`
         : ''}
     </div>`;
   }
@@ -398,7 +369,7 @@ export class PackCardZellen extends LitElement {
     const zellen = attrNum(status, 'zellsensoren');
     const strom = attrNum(status, 'stromsensoren');
     const basisOk = zellen === this.packs.length * 16 && strom === this.packs.length;
-    return html`<div class="filt">
+    return html`<div class="filt surf">
       ${sel(ZEITRAUM, 'Zeitraum', 'f-zeit')} ${sel(ZUSTAND, 'Zustand', 'f-zust')}
       <label class="f-spr"
         >Mindestspreizung mV<input
@@ -519,7 +490,7 @@ export class PackCardZellen extends LitElement {
         @click=${() => this._pick(d.p.pack)}
       >${signed(v, 1)}</button>`;
     };
-    return html`<div class="box dev">
+    return html`<div class="box dev surf">
       <h3>Abweichung vom Packmittel</h3>
       <p>mV je Zelle, gemittelt über die Stunden des Zustands; orange über, blau unter dem Packmittel, umrandet die Leitzellen. Klick wählt das Pack.</p>
       ${this.matrix(data, cur, cell)}
@@ -553,7 +524,7 @@ export class PackCardZellen extends LitElement {
         @click=${() => this._pick(d.p.pack)}
       >${u > 0 ? html`<span>▲${Math.round(u)}</span>` : ''}${t > 0 ? html`<span>▼${Math.round(t)}</span>` : ''}</button>`;
     };
-    return html`<div class="box share">
+    return html`<div class="box share surf">
       <h3>Anteil am Extrem im Pack</h3>
       <p>▲ höchste, ▼ niedrigste Zelle ihres Packs, Anteil der Stunden des Zustands in %; gewertet nur Stunden ab der Mindestspreizung mit genau einer Extremzelle.</p>
       ${this.matrix(data, cur, cell)}

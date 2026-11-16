@@ -1,4 +1,4 @@
-// Shared building blocks: clickable value (E4), column-aligned group (E21), navigation, fallback (E10), styles (E15).
+// Shared building blocks: clickable value (E4), column-aligned group (E21), navigation, fallback (E10), styles (E15, E26).
 import { css, html, TemplateResult } from 'lit';
 import { Hass, ZELLEN_PACK, exists, stateOf } from './entities';
 import { CapUnit, fmt } from './format';
@@ -140,51 +140,120 @@ export function socColor(soc: number | undefined): string {
 }
 
 /**
- * Color variables (E15): surfaces, text and lines from the HA theme; status colors are own variables
- * with separate values for light and dark, switched via the attribute dark (hass.themes.darkMode).
- * Fixed values only as fallback in var(); a theme can override them via --pack-card-*-color.
+ * Design variables (E15, E26): surfaces, text, lines, status colors, font, font sizes, radii and spacing come from
+ * the HA frontend variables, so the card follows the active theme in light and dark mode. The fixed values are only
+ * fallbacks for an older frontend; a theme can still override single status colors via --pack-card-*-color.
  */
 export const themeVars = css`
   :host {
+    --pc-font: var(--ha-font-family-body, Roboto, Noto, sans-serif);
+    --pc-fs-xs: var(--ha-font-size-xs, 10px);
+    --pc-fs-s: var(--ha-font-size-s, 12px);
+    --pc-fs-m: var(--ha-font-size-m, 14px);
+    --pc-fs-l: var(--ha-font-size-l, 16px);
+    --pc-fs-xl: var(--ha-font-size-xl, 20px);
+    --pc-fs-2xl: var(--ha-font-size-2xl, 24px);
+    --pc-r-sm: var(--ha-border-radius-sm, 4px);
+    --pc-r-md: var(--ha-border-radius-md, 8px);
+    --pc-r-lg: var(--ha-card-border-radius, var(--ha-border-radius-lg, 12px));
+    --pc-r-pill: var(--ha-border-radius-pill, 9999px);
     --pc-fg: var(--primary-text-color);
     --pc-fg2: var(--secondary-text-color);
     --pc-line: var(--divider-color);
     --pc-card: var(--ha-card-background, var(--card-background-color));
     --pc-fg3: color-mix(in srgb, var(--secondary-text-color) 75%, var(--pc-card));
-    --pc-raise: var(--secondary-background-color);
+    --pc-raise: var(--ha-color-fill-neutral-quiet-resting, var(--secondary-background-color));
+    --pc-fill-pri: var(--ha-color-fill-primary-quiet-resting, color-mix(in srgb, var(--primary-color) 12%, var(--pc-card)));
     --pc-accent: var(--primary-color);
-    --pc-screen: color-mix(in srgb, var(--primary-color) 7%, var(--pc-raise));
-    --pc-ok: var(--pack-card-ok-color, #2b8a52);
-    --pc-soft: var(--pack-card-soft-color, #8c8a12);
-    --pc-warn: var(--pack-card-warn-color, #c46f00);
-    --pc-bad: var(--pack-card-bad-color, #c62828);
-    --pc-bal: var(--pack-card-bal-color, #00838f);
-    --pc-low: var(--pack-card-low-color, #1f63b8);
-    /* enclosure modeled on the real pack (E17): type plate, screen bezel, terminal caps plus (orange) and minus */
-    --pc-plate: var(--pack-card-plate-color, #f7f7f5);
-    --pc-plate-fg: var(--pack-card-plate-text-color, #161616);
-    --pc-bezel: var(--pack-card-bezel-color, #34373b);
-    --pc-term-pos: var(--pack-card-terminal-plus-color, #e8661c);
-    --pc-term-neg: var(--pack-card-terminal-minus-color, #2a2c2f);
-  }
-  :host([dark]) {
-    --pc-ok: var(--pack-card-ok-color-dark, #5cc68b);
-    --pc-soft: var(--pack-card-soft-color-dark, #cfcb4f);
-    --pc-warn: var(--pack-card-warn-color-dark, #f2a33c);
-    --pc-bad: var(--pack-card-bad-color-dark, #f06663);
-    --pc-bal: var(--pack-card-bal-color-dark, #3fd2de);
-    --pc-low: var(--pack-card-low-color-dark, #6aa9f2);
-    --pc-plate: var(--pack-card-plate-color-dark, #e4e4e0);
-    --pc-plate-fg: var(--pack-card-plate-text-color-dark, #161616);
-    --pc-bezel: var(--pack-card-bezel-color-dark, #050607);
-    --pc-term-pos: var(--pack-card-terminal-plus-color-dark, #f07a35);
-    --pc-term-neg: var(--pack-card-terminal-minus-color-dark, #0c0d0e);
+    --pc-screen: var(--pc-raise);
+    --pc-ok: var(--pack-card-ok-color, var(--success-color, #43a047));
+    --pc-soft: var(--pack-card-soft-color, var(--amber-color, #ffc107));
+    --pc-warn: var(--pack-card-warn-color, var(--warning-color, #ffa600));
+    --pc-bad: var(--pack-card-bad-color, var(--error-color, #db4437));
+    --pc-bal: var(--pack-card-bal-color, var(--info-color, #039be5));
+    --pc-low: var(--pack-card-low-color, var(--info-color, #039be5));
+    /* text on quiet status fills and outlined status buttons (readable in light and dark) */
+    --pc-ok-on: var(--ha-color-on-success-normal, #036730);
+    --pc-warn-on: var(--ha-color-on-warning-normal, #9d3800);
+    --pc-bad-on: var(--ha-color-on-danger-normal, #b30532);
+    font-family: var(--pc-font);
+    -webkit-font-smoothing: var(--ha-font-smoothing, antialiased);
   }
 `;
 
 export const sharedStyles = css`
   :host {
     color: var(--pc-fg);
+    font-size: var(--pc-fs-m);
+    line-height: var(--ha-line-height-normal, 1.6);
+  }
+  /* surface in the style of ha-card (E26): every group of a view is its own card */
+  .surf {
+    background: var(--pc-card);
+    border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--pc-line));
+    border-radius: var(--pc-r-lg);
+    box-shadow: var(--ha-card-box-shadow, none);
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  /* view and section heading like the heading card: 16 px, normal weight */
+  .ttl {
+    font-size: var(--pc-fs-l);
+    font-weight: var(--ha-font-weight-normal, 400);
+    line-height: var(--ha-line-height-normal, 1.6);
+    margin: 0;
+    white-space: nowrap;
+  }
+  /* buttons in the style of ha-button: pill, 32 px (small) or 40 px, 14 px medium */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--pc-line);
+    border-radius: var(--pc-r-pill);
+    background: transparent;
+    color: var(--pc-accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--pc-fs-m);
+    font-weight: var(--ha-font-weight-medium, 500);
+    line-height: 1;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--pc-fill-pri);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--pc-accent);
+    outline-offset: 2px;
+  }
+  .btn.pri {
+    background: var(--pc-accent);
+    border-color: transparent;
+    color: var(--text-primary-color, #fff);
+  }
+  /* badge like the HA badges: pill, 12 px medium */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: var(--pc-r-pill);
+    border: 1px solid var(--pc-line);
+    background: var(--pc-card);
+    font-size: var(--pc-fs-s);
+    font-weight: var(--ha-font-weight-medium, 500);
+    white-space: nowrap;
+    box-sizing: border-box;
   }
   .num,
   .v {
@@ -199,7 +268,7 @@ export const sharedStyles = css`
     color: inherit;
     cursor: pointer;
     text-align: inherit;
-    border-radius: 4px;
+    border-radius: var(--pc-r-sm);
   }
   .v:hover:not(:disabled) {
     background: color-mix(in srgb, var(--pc-accent) 12%, transparent);
@@ -235,27 +304,28 @@ export const sharedStyles = css`
   }
   .seg {
     display: inline-flex;
-    border: 1px solid var(--pc-line);
-    border-radius: 8px;
-    overflow: hidden;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--pc-r-pill);
+    background: var(--pc-raise);
     flex: none;
   }
   .seg button {
     border: 0;
     background: transparent;
-    padding: 2px 9px;
+    padding: 6px 12px;
+    border-radius: var(--pc-r-pill);
     cursor: pointer;
     font: inherit;
-    font-size: 12px;
+    font-size: var(--pc-fs-m);
+    font-weight: var(--ha-font-weight-medium, 500);
+    line-height: 1;
     color: var(--pc-fg2);
   }
-  .seg button + button {
-    border-left: 1px solid var(--pc-line);
-  }
   .seg button[aria-pressed='true'] {
-    background: color-mix(in srgb, var(--pc-accent) 16%, transparent);
+    background: var(--pc-card);
     color: var(--pc-fg);
-    font-weight: 500;
+    box-shadow: 0 0 0 1px var(--pc-line);
   }
   .seg button:focus-visible {
     outline: 2px solid var(--pc-accent);
@@ -264,29 +334,29 @@ export const sharedStyles = css`
   .tag {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 1px 8px;
-    border-radius: 999px;
-    font-size: 12px;
+    gap: 4px;
+    padding: 4px 8px;
+    line-height: 1.2;
+    border-radius: var(--pc-r-pill);
+    font-size: var(--pc-fs-s);
     font-weight: 500;
     white-space: nowrap;
   }
   .tag.ok {
-    color: var(--pc-ok);
+    color: var(--pc-ok-on);
     background: color-mix(in srgb, var(--pc-ok) 14%, transparent);
   }
   .tag.bad {
-    color: var(--pc-bad);
+    color: var(--pc-bad-on);
     background: color-mix(in srgb, var(--pc-bad) 14%, transparent);
   }
   .tag.warn {
-    color: var(--pc-warn);
+    color: var(--pc-warn-on);
     background: color-mix(in srgb, var(--pc-warn) 15%, transparent);
   }
   .tag.mut {
     color: var(--pc-fg2);
     background: var(--pc-raise);
-    border: 1px solid var(--pc-line);
   }
   .src {
     font-size: 0.85em;
@@ -294,22 +364,22 @@ export const sharedStyles = css`
   }
   .fail {
     color: var(--pc-bad);
-    font-size: 13px;
-    padding: 6px 8px;
+    font-size: var(--pc-fs-m);
+    padding: 8px 12px;
     border: 1px dashed var(--pc-bad);
-    border-radius: 8px;
+    border-radius: var(--pc-r-md);
   }
 
   /* group per E21: label | values of the row, left-aligned behind the label column */
   .grp {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    column-gap: 10px;
-    row-gap: 3px;
+    column-gap: 12px;
+    row-gap: 4px;
     justify-content: start;
     align-items: baseline;
     align-content: start;
-    font-size: 13.5px;
+    font-size: var(--pc-fs-m);
     line-height: 1.4;
     min-width: 0;
   }
@@ -358,20 +428,22 @@ export const switchStyles = css`
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    border: 1px solid var(--pc-line);
-    border-radius: 8px;
-    padding: 5px 8px;
-    background: var(--pc-card);
+    border: 0;
+    border-radius: 0;
+    padding: 8px 12px;
+    min-height: 56px;
+    background: transparent;
     color: var(--pc-fg);
     cursor: pointer;
     font: inherit;
-    font-size: 12.5px;
+    font-size: var(--pc-fs-m);
+    font-weight: var(--ha-font-weight-medium, 500);
     text-align: left;
     user-select: none;
     -webkit-user-select: none;
   }
   .sw:hover:not(:disabled) {
-    border-color: var(--pc-fg3);
+    background: var(--pc-raise);
   }
   .sw:disabled {
     opacity: 0.45;
@@ -379,7 +451,7 @@ export const switchStyles = css`
   }
   .sw:focus-visible {
     outline: 2px solid var(--pc-accent);
-    outline-offset: 1px;
+    outline-offset: -2px;
   }
   .sw .lbl {
     position: relative;
@@ -393,25 +465,26 @@ export const switchStyles = css`
     white-space: nowrap;
   }
   .sw .lbl small {
-    font-size: 10px;
-    color: var(--pc-fg3);
+    font-size: var(--pc-fs-s);
+    font-weight: var(--ha-font-weight-normal, 400);
+    color: var(--pc-fg2);
     white-space: nowrap;
   }
   .sw .knob {
     position: relative;
     flex: none;
-    width: 30px;
-    height: 17px;
-    border-radius: 9px;
-    background: color-mix(in srgb, var(--pc-fg3) 45%, transparent);
+    width: 40px;
+    height: 24px;
+    border-radius: var(--pc-r-pill);
+    background: var(--ha-switch-background-color, color-mix(in srgb, var(--pc-fg3) 45%, transparent));
   }
   .sw .knob::after {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 13px;
-    height: 13px;
+    top: 4px;
+    left: 4px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--pc-card);
     transition: left 0.15s;
@@ -420,15 +493,15 @@ export const switchStyles = css`
     background: var(--pc-accent);
   }
   .sw[aria-checked='true'] .knob::after {
-    left: 15px;
+    left: 20px;
   }
   @container (max-width: 639px) {
     .sw {
       flex-direction: column;
       justify-content: center;
       gap: 4px;
-      padding: 5px 3px;
-      font-size: 11.5px;
+      padding: 8px 4px;
+      font-size: var(--pc-fs-s);
       text-align: center;
     }
     .sw .lbl {

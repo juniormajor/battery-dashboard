@@ -39,11 +39,9 @@ export class PackCardCells extends LitElement {
       }
       .box {
         container-type: inline-size;
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
-        padding: 8px 10px 10px;
+        padding: 12px 16px;
         display: grid;
-        gap: 6px;
+        gap: 8px;
       }
       /* cell frame as wide as its content, both columns centered; the gap carries the balancing flow */
       .grid {
@@ -52,7 +50,7 @@ export class PackCardCells extends LitElement {
         grid-template-columns: repeat(2, minmax(0, max-content));
         justify-content: center;
         column-gap: 48px;
-        row-gap: 3px;
+        row-gap: 4px;
       }
       .cell {
         position: relative;
@@ -60,13 +58,13 @@ export class PackCardCells extends LitElement {
         display: flex;
         align-items: baseline;
         justify-content: flex-start;
-        gap: 5px;
+        gap: 4px;
         padding: 2px 8px;
-        border-radius: 6px;
-        border: 1px solid var(--pc-line);
-        background: var(--pc-card);
+        border-radius: var(--pc-r-md);
+        border: 0;
+        background: var(--pc-screen);
         min-width: 0;
-        font-size: 13px;
+        font-size: var(--pc-fs-m);
         line-height: 1.5;
       }
       .cell .uv {
@@ -77,12 +75,12 @@ export class PackCardCells extends LitElement {
         white-space: nowrap;
       }
       .cell .n {
-        font-size: 11.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
         min-width: 1.6em;
       }
       .cell .cv {
-        font-weight: 500;
+        font-weight: var(--ha-font-weight-medium, 500);
       }
       .cell .gs {
         color: var(--pc-fg3);
@@ -92,21 +90,19 @@ export class PackCardCells extends LitElement {
         white-space: nowrap;
       }
       .cell.d-soft {
-        background: color-mix(in srgb, var(--pc-soft) 12%, var(--pc-card));
+        background: color-mix(in srgb, var(--pc-soft) 12%, var(--pc-screen));
       }
       .cell.d-warn {
-        background: color-mix(in srgb, var(--pc-warn) 14%, var(--pc-card));
+        background: color-mix(in srgb, var(--pc-warn) 14%, var(--pc-screen));
       }
       .cell.d-bad {
-        background: color-mix(in srgb, var(--pc-bad) 14%, var(--pc-card));
+        background: color-mix(in srgb, var(--pc-bad) 14%, var(--pc-screen));
       }
       .cell.mx {
-        border-color: var(--pc-ok);
-        box-shadow: 0 0 0 1px var(--pc-ok);
+        box-shadow: inset 0 0 0 2px var(--pc-ok);
       }
       .cell.mn {
-        border-color: var(--pc-bad);
-        box-shadow: 0 0 0 1px var(--pc-bad);
+        box-shadow: inset 0 0 0 2px var(--pc-bad);
       }
       /* balancer cells: pulsing outline; outline instead of a pseudo-element so nothing needs space beyond the cell */
       .cell.bm {
@@ -156,25 +152,25 @@ export class PackCardCells extends LitElement {
       }
       @container (max-width: 420px) {
         .box {
-          padding: 6px 6px 8px;
+          padding: 8px;
         }
         .grid {
-          column-gap: 22px;
-          row-gap: 2px;
+          column-gap: 24px;
+          row-gap: 4px;
         }
         .cell {
-          padding: 1px 4px;
+          padding: 2px 4px;
           gap: 4px;
-          font-size: 12px;
+          font-size: var(--pc-fs-s);
         }
         .cell .uv {
           gap: 5px;
         }
         .cell .n {
-          font-size: 10.5px;
+          font-size: var(--pc-fs-s);
         }
         .cell .cr {
-          font-size: 11.5px;
+          font-size: var(--pc-fs-s);
         }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -273,7 +269,7 @@ export class PackCardCells extends LitElement {
     const rows: TemplateResult[] = [];
     const half = CELLS / 2;
     for (let i = 1; i <= half; i++) rows.push(cell(i), cell(i + half));
-    return html`<section class="box" aria-label=${`Zellen Pack ${n}`}>
+    return html`<section class="box surf" aria-label=${`Zellen Pack ${n}`}>
       <div class="grid">
         ${rows}
         ${
