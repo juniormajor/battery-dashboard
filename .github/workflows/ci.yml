@@ -1,0 +1,42 @@
+# CI: builds the card and runs the render test (test/render/shot.cjs) in Chromium. The job
+# build-and-render is the required status check for main (ruleset main-checks); Dependabot PRs
+# are merged automatically only after it has passed.
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and render test
+        run: npm test
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: render-out
+          path: render-out/
+          retention-days: 14

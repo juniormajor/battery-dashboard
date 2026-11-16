@@ -1,6 +1,8 @@
-// Rendertest: npm run build, dann node test/render/shot.cjs <ausgabeordner> <name>=<query>@<breite> ...
-// Startet einen statischen Server auf test/render (die Karte aus dist/), rendert jede Variante in Chromium
-// (Playwright) und meldet Konsolenfehler sowie waagrechtes Ueberlaufen der Karte.
+// Render test: npm run build, then node test/render/shot.cjs [<output dir> <name>=<query>@<width> ...]
+// Starts a static server on test/render (the card from dist/), renders each variant in Chromium (Playwright)
+// and reports console errors and horizontal overflow of the card. Exits with code 1 if any variant has errors,
+// overflow or a page wider than the viewport. Without arguments it renders the default variants into
+// render-out/ (used by npm test and the CI).
 // Query: view=speicher|pack|zellen, dark=1, unit=kWh, pack=<n>, bal=<n>, err=<n>, em=<n>, off=<n>, admin=0 (mock.js)
 const { chromium } = require('playwright');
 const http = require('http');
@@ -8,8 +10,19 @@ const fs = require('fs');
 const path = require('path');
 
 const root = __dirname;
-const out = process.argv[2];
-const jobs = process.argv.slice(3);
+const DEFAULT_JOBS = [
+  'speicher=view=speicher@1500',
+  'speicher-handy=view=speicher&unit=kWh@390',
+  'speicher-dunkel=view=speicher&dark=1&err=2&em=3&off=4@1500',
+  'pack=view=pack&bal=1@1500',
+  'pack-dunkel=view=pack&dark=1&pack=5@390',
+  'pack-offline=view=pack&pack=4&off=4&admin=0@1500',
+  'zellen=view=zellen@1500',
+  'zellen-handy=view=zellen@390',
+];
+const out = process.argv[2] || path.join(root, '..', '..', 'render-out');
+const jobs = process.argv.length > 3 ? process.argv.slice(3) : DEFAULT_JOBS;
+let failed = 0;
 fs.mkdirSync(out, { recursive: true });
 
 const resolve = (url) => {
@@ -65,8 +78,15 @@ server.listen(8765, async () => {
     console.log(`${name}: card ${overflow.cardW}px, doc ${overflow.docW}/${overflow.vw}`);
     if (overflow.res.length) console.log(`  overflow: ${overflow.res.slice(0, 8).join(' | ')}`);
     if (errors.length) console.log(`  console: ${errors.slice(0, 6).join(' | ')}`);
+    if (overflow.res.length || errors.length || overflow.docW > overflow.vw) failed++;
     await page.close();
   }
   await browser.close();
   server.close();
+  if (failed) {
+    console.log(`FAILED: ${failed} of ${jobs.length} variants`);
+    process.exitCode = 1;
+  } else {
+    console.log(`OK: ${jobs.length} variants`);
+  }
 });
