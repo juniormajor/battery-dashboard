@@ -55,7 +55,7 @@ npm ci
 npm run build
 ```
 
-Result: `dist/battery-dashboard.js`. Releases are created in GitHub Actions: if a push to `main` raises the version in `package.json`, the workflow `release` creates tag and release `v<version>` with the file attached.
+Result: `dist/battery-dashboard.js`. esbuild (via `rollup-plugin-esbuild`) transpiles the TypeScript sources using `tsconfig.json`; type checking runs separately with TypeScript 7 (`npm run typecheck`, `tsc --noEmit`). `useDefineForClassFields: false` in `tsconfig.json` must stay, otherwise class fields would shadow Lit's reactive properties. Releases are created in GitHub Actions: if a push to `main` raises the version in `package.json`, the workflow `release` creates tag and release `v<version>` with the file attached.
 
 ## Render test
 
@@ -68,11 +68,11 @@ node test/render/shot.cjs /tmp/render "pack=view=pack&bal=1@1500" "pack-dark=vie
 node test/render/hold.cjs
 ```
 
-`npm test` builds the card and renders the default variants into `render-out/`. `shot.cjs` saves a PNG per variant, reports console errors and horizontal overflow, and exits with code 1 if any variant fails; the query selects the variant (`view`, `dark=1`, `unit=kWh`, `pack=<n>`, balancing `bal=<n>`, error text `err=<n>`, Emergency `em=<n>`, without data `off=<n>`, non-admin `admin=0`). `hold.cjs` holds Emergency and ESP reboot during frequent `hass` updates and prints the fill of the button.
+`npm test` type-checks and builds the card and renders the default variants into `render-out/`. `shot.cjs` saves a PNG per variant, reports console errors and horizontal overflow, and exits with code 1 if any variant fails; the query selects the variant (`view`, `dark=1`, `unit=kWh`, `pack=<n>`, balancing `bal=<n>`, error text `err=<n>`, Emergency `em=<n>`, without data `off=<n>`, non-admin `admin=0`). `hold.cjs` holds Emergency and ESP reboot during frequent `hass` updates and prints the fill of the button.
 
 ## Maintenance
 
-The workflow `ci` runs the build and the render test on every pull request and push to `main`; its job `build-and-render` is the required check for `main`. Dependabot checks GitHub Actions and npm monthly. Actions updates and npm minor/patch updates are merged automatically once the check has passed; npm major updates stay open for review. Merged updates do not create a release by themselves.
+The workflow `ci` runs the type check, the build and the render test on every pull request and push to `main`; its job `build-and-render` is the required check for `main`. Dependabot checks GitHub Actions and npm monthly. Actions updates and npm minor/patch updates are merged automatically once the check has passed; npm major updates stay open for review. Merged updates do not create a release by themselves.
 
 ## Credits
 
