@@ -99,6 +99,8 @@
       ],
     });
     el.hass = window.mockHass;
+    // w=<px>: narrow the panel like a column of a Sections view (view bank)
+    if (q.get('w')) document.getElementById('panel').style.maxWidth = `${Number(q.get('w'))}px`;
     document.getElementById('panel').appendChild(el);
     window.__ready = true;
   </script>

@@ -3,13 +3,15 @@
 // legend. Speicher and pack are at most MAX_W wide and centered (E2); the cell analysis uses the full width.
 // View pack: one pack from input_select.zellen_pack (E5, E19), drawn by pack-card-pack.
 // View zellen: cell analysis (E18) from the sql sensors of the cell evaluation (A01c), drawn by pack-card-zellen.
+// View bank: compact overview for Sections views (E2, F05 E5): heading with a jump to the packs and the bank display
+// (E16) with the central Emergency; fills the width the Sections grid gives it (E23).
 import { LitElement, html, css, unsafeCSS, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
 import { SocFrame, packSocForFrame } from './pack-card-tile';
 import { fallback, navigate, sharedStyles, themeVars, unitSwitch, viewPath } from './ui';
 
-type View = 'speicher' | 'pack' | 'zellen';
+type View = 'speicher' | 'pack' | 'zellen' | 'bank';
 
 export interface PackCardConfig {
   type: string;
@@ -20,7 +22,7 @@ export interface PackCardConfig {
   pack_path?: string;
   /** path of the cell analysis, relative to the dashboard or absolute from "/" (default zellen) */
   zellen_path?: string;
-  /** path of the speicher view for the back link of the pack view (default speicher) */
+  /** path of the speicher view for the back link of the pack view and the jump of the bank view (default speicher) */
   speicher_path?: string;
 }
 
@@ -69,7 +71,8 @@ export class PackCard extends LitElement {
         max-width: var(--pack-card-max-width, ${unsafeCSS(MAX_W)});
         margin: 0 auto;
       }
-      :host([view='zellen']) {
+      :host([view='zellen']),
+      :host([view='bank']) {
         max-width: none;
       }
       /* the frame draws no card of its own: every group is its own surface in the style of ha-card (E26) */
@@ -142,8 +145,8 @@ export class PackCard extends LitElement {
   setConfig(config: PackCardConfig): void {
     const packs = normalizePacks(config?.packs);
     const view = config.view ?? 'speicher';
-    if (!['speicher', 'pack', 'zellen'].includes(view)) {
-      throw new Error('pack-card: "view" muss speicher, pack oder zellen sein');
+    if (!['speicher', 'pack', 'zellen', 'bank'].includes(view)) {
+      throw new Error('pack-card: "view" muss speicher, pack, zellen oder bank sein');
     }
     for (const key of ['pack_path', 'zellen_path', 'speicher_path'] as const) {
       const v = config[key];
@@ -161,10 +164,13 @@ export class PackCard extends LitElement {
   }
 
   getCardSize(): number {
+    if (this._view === 'bank') return 5;
     return this._view === 'pack' ? 12 : this._view === 'zellen' ? 14 : 2 + this._packs.length;
   }
 
   getGridOptions() {
+    // bank sits next to standard cards in a Sections view (F05 E5); the other views take the whole width
+    if (this._view === 'bank') return { columns: 12, min_columns: 6, rows: 'auto' };
     return { columns: 'full' };
   }
 
@@ -233,6 +239,18 @@ export class PackCard extends LitElement {
         return html`<ha-card>${fallback('Ansicht zellen', e)}</ha-card>`;
       }
     }
+    if (this._view === 'bank') {
+      try {
+        return html`<ha-card>
+          <div class="speicher">
+            ${this.renderBankHead()}
+            <pack-card-bank .hass=${this.hass} .unit=${this._unit} .packs=${this._packs} .now=${this._now}></pack-card-bank>
+          </div>
+        </ha-card>`;
+      } catch (e) {
+        return html`<ha-card>${fallback('Ansicht bank', e)}</ha-card>`;
+      }
+    }
     try {
       return html`<ha-card>
         <div class="speicher">
@@ -253,6 +271,17 @@ export class PackCard extends LitElement {
       <span class="sp"></span>
       ${unitSwitch(this._unit, (u) => this._setUnit(u))}
       <button type="button" class="btn" @click=${() => navigate(viewPath(this._zellenPath))}>Zellanalyse</button>
+    </div>`;
+  }
+
+  /** Heading of the bank view: title, pack count, Ah/kWh and the jump to the cabinet with packs and cells. */
+  private renderBankHead(): TemplateResult {
+    return html`<div class="head">
+      <h2 class="ttl">Speicher gesamt</h2>
+      <span class="sub">${this._packs.length} Packs</span>
+      <span class="sp"></span>
+      ${unitSwitch(this._unit, (u) => this._setUnit(u))}
+      <button type="button" class="btn" @click=${() => navigate(viewPath(this._speicherPath))}>Packs und Zellen</button>
     </div>`;
   }
 
