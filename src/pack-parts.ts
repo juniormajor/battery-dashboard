@@ -1,5 +1,5 @@
-// Gemeinsame Teile von Gehaeuse (Ansicht speicher, E17) und Packansicht (E19): Datenalter, Lampen RUN/ALM/BAL/EMG,
-// BLE-Pegel, hoechste Temperatur mit Fuehler (E21, A01e), Toenung nach ΔU, Extremzellen und Balancer-Zellen.
+// Shared parts of the enclosure (view speicher, E17) and the pack view (E19): data age, lamps RUN/ALM/BAL/EMG,
+// BLE level, highest temperature with sensor (E21, A01e), tint by ΔU, extreme cells and balancer cells.
 import { css, html, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, ageSeconds, numberOf, packEntity, stackEntity, stackOf, stateOf, unitOf } from './entities';
 import { CapUnit, ageText, capText, snum } from './format';
@@ -8,8 +8,8 @@ import { GroupLine, val } from './ui';
 export const CELLS = 16;
 
 /**
- * Fuehler in der Benennung der JK-App (E21, A01e „Temperaturfuehler“): IC ist die MOSFET-Temperatur, ESPHome-Fuehler 3
- * ist JK T5, 4 ist T4; ESPHome-Fuehler 5 ist JK T3, ein Spiegel des IC, und entfaellt.
+ * Sensors in the naming of the JK app (E21, A01e "Temperaturfuehler"): IC is the MOSFET temperature, ESPHome sensor 3
+ * is JK T5, 4 is T4; ESPHome sensor 5 is JK T3, a mirror of the IC, and is dropped.
  */
 export const TEMPS: [string, string][] = [
   ['IC', 'mosfet_temperature'],
@@ -21,12 +21,12 @@ export const TEMPS: [string, string][] = [
 
 export interface MaxTemp {
   v: number;
-  /** Fuehler in JK-Benennung */
+  /** sensor in JK naming */
   s: string;
   id: string;
 }
 
-/** Hoechste Temperatur ueber IC und die vier eigenstaendigen Fuehler (E21). */
+/** Highest temperature over the IC and the four independent sensors (E21). */
 export function maxTemp(hass: Hass | undefined, p: PackConfig): MaxTemp | undefined {
   let t: MaxTemp | undefined;
   for (const [label, key] of TEMPS) {
@@ -37,13 +37,13 @@ export function maxTemp(hass: Hass | undefined, p: PackConfig): MaxTemp | undefi
   return t;
 }
 
-/** Toenung des Bildschirms nach ΔU (Mockup band(): ab 5 mV und ab 15 mV). */
+/** Tint of the screen by ΔU (mockup band(): from 5 mV and from 15 mV). */
 export function band(dmv: number | undefined): string {
   if (dmv === undefined) return '';
   return dmv >= 15 ? 't-warn' : dmv >= 5 ? 't-soft' : '';
 }
 
-/** ΔU in mV, unabhaengig davon, ob der Sensor V oder mV meldet. */
+/** ΔU in mV, regardless of whether the sensor reports V or mV. */
 export function deltaMv(hass: Hass | undefined, p: PackConfig): number | undefined {
   const id = packEntity(p, 'sensor', 'delta_cell_voltage');
   const d = numberOf(hass, id);
@@ -51,13 +51,13 @@ export function deltaMv(hass: Hass | undefined, p: PackConfig): number | undefin
   return unitOf(hass, id) === 'mV' ? d : d * 1000;
 }
 
-/** Datenalter aus last_updated von total_runtime; frisch bis STALE_S (E17, Ebene 1 des Watchdogs). */
+/** Data age from last_updated of total_runtime; fresh up to STALE_S (E17, level 1 of the watchdog). */
 export function packAge(hass: Hass | undefined, p: PackConfig, now: number): { age: number | undefined; fresh: boolean } {
   const age = ageSeconds(hass, packEntity(p, 'sensor', 'total_runtime'), now || Date.now());
   return { age, fresh: age !== undefined && age <= STALE_S };
 }
 
-/** Lampen RUN, ALM, BAL, EMG (E17). */
+/** Lamps RUN, ALM, BAL, EMG (E17). */
 export function packLeds(hass: Hass | undefined, p: PackConfig, fresh: boolean, alarm: boolean): TemplateResult {
   const bal = stateOf(hass, packEntity(p, 'binary_sensor', 'balancing'))?.state === 'on';
   const em = stateOf(hass, packEntity(p, 'switch', 'emergency'))?.state === 'on';
@@ -70,7 +70,7 @@ export function packLeds(hass: Hass | undefined, p: PackConfig, fresh: boolean, 
   </span>`;
 }
 
-/** BLE-Pegel am Stack-Geraet und Datenalter (Besonderheiten: Stack aus der Packnummer, Datenalter statt online_status). */
+/** BLE level at the stack device and data age (Besonderheiten: stack from the pack number, data age instead of online_status). */
 export function bleInfo(node: EventTarget, hass: Hass | undefined, p: PackConfig, fresh: boolean, age: number | undefined): TemplateResult {
   const rssiId = stackEntity(stackOf(p), p, 'sensor', 'rssi');
   return html`<span class="ble"
@@ -80,8 +80,8 @@ export function bleInfo(node: EventTarget, hass: Hass | undefined, p: PackConfig
 }
 
 /**
- * „Kapazität: Rest (voll)“ je Pack wie im Bank-Display (E16): capacity_remaining und full_charge_capacity des BMS,
- * in der dort gewaehlten Einheit; jeder Wert oeffnet seine Entitaet.
+ * "Kapazität: Rest (voll)" per pack as in the bank display (E16): capacity_remaining and full_charge_capacity of the BMS,
+ * in the unit chosen there; each value opens its entity.
  */
 export function capLine(node: EventTarget, hass: Hass | undefined, p: PackConfig, unit: CapUnit): GroupLine {
   const rem = packEntity(p, 'sensor', 'capacity_remaining');
@@ -96,7 +96,7 @@ export function capLine(node: EventTarget, hass: Hass | undefined, p: PackConfig
   };
 }
 
-/** Zellnummer aus einem Zahlensensor (min_voltage_cell, max_voltage_cell melden z. B. 8.0), nur 1 bis 16. */
+/** Cell number from a numeric sensor (min_voltage_cell, max_voltage_cell report e.g. 8.0), only 1 to 16. */
 export function cellNumber(hass: Hass | undefined, id: string): number | undefined {
   const v = numberOf(hass, id);
   if (v === undefined) return undefined;
@@ -109,7 +109,7 @@ export interface Extremes {
   min?: number;
 }
 
-/** Hoechste und niedrigste Zelle: Werte des BMS, fehlen sie, aus den Zellspannungen gerechnet (wie jk-bms-card). */
+/** Highest and lowest cell: values of the BMS; if they are missing, calculated from the cell voltages (as in jk-bms-card). */
 export function extremeCells(hass: Hass | undefined, p: PackConfig, volts: (number | undefined)[]): Extremes {
   let max = cellNumber(hass, packEntity(p, 'sensor', 'max_voltage_cell'));
   let min = cellNumber(hass, packEntity(p, 'sensor', 'min_voltage_cell'));
@@ -130,18 +130,18 @@ export function extremeCells(hass: Hass | undefined, p: PackConfig, volts: (numb
 }
 
 export interface BalancerState {
-  /** gerundeter Rohwert, undefined ohne gueltigen Wert */
+  /** rounded raw value, undefined without a valid value */
   raw?: number;
-  /** markierte Zellen */
+  /** marked cells */
   cells: number[];
   title: string;
 }
 
 /**
- * sensor.pv_pack_<n>_balancer_status_bitmask. Die Komponente jk_bms_ble legt dort das Byte „Balancing action“ ab
- * (0 aus, 1 Balancer bei Charge, 2 Balancer bei Discharge; jk_bms_ble.cpp und docs/protocol-design-ble.md,
- * abgerufen 2026-11-01), keine Zellmaske. Der aktive Balancer arbeitet von der hoechsten zur niedrigsten Zelle;
- * markiert werden darum bei einem Wert ungleich 0 diese beiden Zellen (wie im Mockup).
+ * sensor.pv_pack_<n>_balancer_status_bitmask. The component jk_bms_ble stores the byte "Balancing action" there
+ * (0 off, 1 balancer while charging, 2 balancer while discharging; jk_bms_ble.cpp and docs/protocol-design-ble.md,
+ * retrieved 2026-11-01), not a cell mask. The active balancer works from the highest to the lowest cell;
+ * therefore, for a value other than 0, these two cells are marked (as in the mockup).
  */
 export function balancerState(hass: Hass | undefined, p: PackConfig, ext: Extremes): BalancerState {
   const v = numberOf(hass, packEntity(p, 'sensor', 'balancer_status_bitmask'));
@@ -154,8 +154,8 @@ export function balancerState(hass: Hass | undefined, p: PackConfig, ext: Extrem
 }
 
 /**
- * Untere Zeile des Gehaeuses wie am realen Pack (E17): links zweimal Plus (orange), in der Mitte die Lampen
- * RUN/ALM/BAL/EMG wie die LED-Leiste der BMS-Platine, rechts zweimal Minus.
+ * Bottom row of the enclosure as on the real pack (E17): left two plus terminals (orange), in the middle the lamps
+ * RUN/ALM/BAL/EMG like the LED bar of the BMS board, right two minus terminals.
  */
 export function caseBottom(leds: TemplateResult): TemplateResult {
   return html`<div class="case-bot">
@@ -166,8 +166,8 @@ export function caseBottom(leds: TemplateResult): TemplateResult {
 }
 
 /**
- * Gehaeuse nach dem realen Pack (E17, E19): oben das Typenschild in der Mitte, BLE-Pegel und Datenalter rechts; darunter
- * SoC-Batterie und der Bildschirm im Rahmen; unten Polkappen und Lampen. Gemeinsam fuer speicher und die Packansicht.
+ * Enclosure modeled on the real pack (E17, E19): type plate top center, BLE level and data age on the right; below
+ * SoC battery and the screen in its bezel; at the bottom terminal caps and lamps. Shared by speicher and the pack view.
  */
 export const caseStyles = css`
   .case {
@@ -228,7 +228,7 @@ export const caseStyles = css`
     outline: 2px solid var(--pc-accent);
     outline-offset: 2px;
   }
-  /* Bildschirm so hoch wie Batterie samt SoC und SoH, damit ueber und unter dem Rahmen kein Leerraum bleibt */
+  /* screen as high as the battery including SoC and SoH, so no empty space remains above and below the bezel */
   .case-mid {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -253,7 +253,7 @@ export const caseStyles = css`
     color: var(--pc-fg2);
     white-space: nowrap;
   }
-  /* Bildschirm im dunklen Rahmen wie das Fenster des BMS-Displays */
+  /* screen in a dark bezel like the window of the BMS display */
   .bezel {
     display: flex;
     border: 4px solid var(--pc-bezel);
@@ -268,7 +268,7 @@ export const caseStyles = css`
     border: 0;
     border-radius: 2px;
   }
-  /* untere Zeile: Polkappen stehen auf der Unterkante, darunter der Kabelansatz */
+  /* bottom row: terminal caps stand on the bottom edge, below them the cable stub */
   .case-bot {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -336,7 +336,7 @@ export const caseStyles = css`
   }
 `;
 
-/** Stile von Lampen, BLE-Anzeige, Master-Abzeichen und Bildschirm-Toenung, gemeinsam fuer Gehaeuse und Packansicht. */
+/** Styles of lamps, BLE indicator, master badge and screen tint, shared by enclosure and pack view. */
 export const packPartStyles = css`
   .badge-m {
     font-size: 10px;

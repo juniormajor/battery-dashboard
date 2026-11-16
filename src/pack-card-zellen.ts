@@ -1,9 +1,9 @@
-// Ansicht zellen (A01d E18, A01c): Filterzeile mit den Helfern aus E6, Kennzahlen des gewaehlten Packs, zwei Matrizen
-// ueber alle Zellen (Abweichung vom Packmittel, Anteil am Extrem im Pack) und darunter die Drift der Leitzellen
-// (eigenes Element pack-card-drift, A01c E6). Datenquelle sind die sql-Sensoren der Zellauswertung (A01c E9):
-// sensor.zellen_pack_<n> mit den Werten als Attributen und sensor.zellen_status mit Rechenzeitpunkt und Datenbasis.
-// Klick auf eine Packzeile setzt input_select.zellen_pack (E6). Jeder Block und jede Matrixzeile in eigenem try/catch
-// mit sichtbarem Rueckfall (E10). Unter 600 px Breite stehen die Zellen 1-8 und 9-16 in zwei Matrizen untereinander (R4).
+// View zellen (A01d E18, A01c): filter row with the helpers from E6, key figures of the selected pack, two matrices
+// over all cells (deviation from the pack mean, share of the extreme within the pack) and below them the drift of the lead cells
+// (own element pack-card-drift, A01c E6). Data source are the sql sensors of the cell evaluation (A01c E9):
+// sensor.zellen_pack_<n> with the values as attributes and sensor.zellen_status with calculation time and data basis.
+// Clicking a pack row sets input_select.zellen_pack (E6). Each block and each matrix row in its own try/catch
+// with a visible fallback (E10). Below 600 px width, cells 1-8 and 9-16 are shown in two matrices one above the other (R4).
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, HassEntity, PackConfig, ZELLEN_PACK, exists, isAvailable, stateOf } from './entities';
 import { DASH, fmt, num, packCell, signed, snum } from './format';
@@ -12,7 +12,7 @@ import { fallback, navigate, selectPack, sharedStyles, val, viewPath } from './u
 export const ZEITRAUM = 'input_select.zellen_zeitraum';
 export const ZUSTAND = 'input_select.zellen_zustand';
 
-/** Anzeige der Helferwerte: Laden, Entladen und Ruhe heissen in der Karte Charge, Discharge und Idle; der Helferwert bleibt (A01c). */
+/** Display of the helper values: Laden, Entladen and Ruhe are called Charge, Discharge and Idle in the card; the helper value stays (A01c). */
 const OPT_LABEL: Record<string, string> = { Laden: 'Charge', Entladen: 'Discharge', Ruhe: 'Idle' };
 const optLabel = (o: string): string => OPT_LABEL[o] ?? o;
 export const SPREIZUNG = 'input_number.zellen_mindestspreizung';
@@ -22,7 +22,7 @@ export const zellenSensor = (n: number): string => `sensor.zellen_pack_${n}`;
 const CELLS = Array.from({ length: 16 }, (_, i) => i + 1);
 const HALVES = [CELLS.slice(0, 8), CELLS.slice(8)];
 
-/** Attribut als Zahl, sonst undefined. */
+/** Attribute as number, otherwise undefined. */
 function attrNum(s: HassEntity | undefined, key: string): number | undefined {
   const v = s?.attributes?.[key];
   const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN;
@@ -34,7 +34,7 @@ function attrText(s: HassEntity | undefined, key: string): string | undefined {
   return typeof v === 'string' && v.trim() ? v : undefined;
 }
 
-/** Zeitpunkt „02.11. 09:28“ in der Zeitzone des Browsers. */
+/** Timestamp "02.11. 09:28" in the browser's time zone. */
 export function shortTime(iso: string | undefined, withTime = true): string {
   if (!iso) return DASH;
   const t = new Date(iso);
@@ -80,7 +80,7 @@ export class PackCardZellen extends LitElement {
   packs: PackConfig[] = [];
   speicherPath = 'speicher';
   packPath = 'pack';
-  /** Neu berechnen angestossen, bis der Rechenzeitpunkt sich aendert */
+  /** recalculation triggered, until the calculation time changes */
   private _busy = false;
   private _busyFrom = '';
 
@@ -317,7 +317,7 @@ export class PackCardZellen extends LitElement {
     `,
   ];
 
-  /** Gewaehltes Pack aus input_select.zellen_pack, sonst das erste konfigurierte (wie die Packansicht). */
+  /** Selected pack from input_select.zellen_pack, otherwise the first configured one (as in the pack view). */
   private current(): PackConfig | undefined {
     const st = stateOf(this.hass, ZELLEN_PACK)?.state;
     const m = st ? /^Pack_(\d+)$/.exec(st) : null;
@@ -326,7 +326,7 @@ export class PackCardZellen extends LitElement {
   }
 
   protected willUpdate(): void {
-    // Neu berechnen gilt als erledigt, sobald der Status einen neuen Rechenzeitpunkt meldet
+    // recalculation counts as done as soon as the status reports a new calculation time
     if (this._busy && stateOf(this.hass, STATUS)?.state !== this._busyFrom) this._busy = false;
   }
 
@@ -393,7 +393,7 @@ export class PackCardZellen extends LitElement {
       const v = attrNum(sp, k);
       return v === undefined ? String(d) : String(v);
     };
-    // Laeuft die Rechnung den Helfern hinterher? Zustand, Zeitraum und Schwelle des Status gegen die Helfer
+    // is the calculation lagging behind the helpers? State, period and threshold of the status against the helpers
     const stale = this._stale(status);
     const zellen = attrNum(status, 'zellsensoren');
     const strom = attrNum(status, 'stromsensoren');
@@ -560,7 +560,7 @@ export class PackCardZellen extends LitElement {
     </div>`;
   }
 
-  /** Matrix breit (16 Spalten) und schmal (zweimal 8 Spalten untereinander); sichtbar ist je nach Breite eine (R4). */
+  /** Matrix wide (16 columns) and narrow (twice 8 columns stacked); depending on the width one of them is visible (R4). */
   private matrix(data: PackData[], cur: PackConfig | undefined, cell: (d: PackData, z: number) => TemplateResult): TemplateResult {
     const grid = (cols: number[], narrow: boolean) => html`<div class="hm" style="--n:${cols.length}">
       <div class="hm-row hm-hd"><span></span>${cols.map((z) => html`<span class="hm-head">${String(z).padStart(2, '0')}</span>`)}</div>
@@ -617,13 +617,13 @@ export class PackCardZellen extends LitElement {
     }
   }
 
-  /** Neu berechnen: die sql-Sensoren der Packs und den Status sofort rechnen (homeassistant.update_entity). */
+  /** Recalculate: compute the sql sensors of the packs and the status immediately (homeassistant.update_entity). */
   private async _recalc(): Promise<void> {
     const ids = [...this.packs.map((p) => zellenSensor(p.pack)), STATUS].filter((id) => exists(this.hass, id));
     if (!ids.length || !this.hass?.callService) return;
     this._busyFrom = stateOf(this.hass, STATUS)?.state ?? '';
     this._busy = true;
-    // Sicherung: ohne neuen Rechenzeitpunkt gibt der Knopf nach 30 s wieder frei
+    // safeguard: without a new calculation time the button is released again after 30 s
     window.setTimeout(() => (this._busy = false), 30000);
     try {
       await this.hass.callService('homeassistant', 'update_entity', { entity_id: ids });

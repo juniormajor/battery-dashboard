@@ -1,9 +1,9 @@
-// Ansicht pack (A01d E19): ein Pack aus input_select.zellen_pack (E5, E6), im Aufbau des Gehaeuses aus E17 in gross.
-// Kopf mit Ruecklink, Name, Master-Abzeichen, Stack, Emergency-Restzeit, Fehlertext (E8), Zellanalyse und Packwechsel;
-// fuenf Schalter in einer Zeile (E12); Gehaeuse mit Lampen, Typenschild, BLE-Pegel und Datenalter, SoC-Batterie und
-// Bildschirm mit den Werten in zwei Bloecken (E21), unten Polkappen; Zellblock (eigenes Element); BLE-Diagnose;
-// unten Emergency und Pack reboot (BMS-Neustart) mit einer Sekunde Halten (E7).
-// Jeder Block in eigenem try/catch mit sichtbarem Rueckfall (E10), Zustaende nur ueber die Guards aus entities.
+// View pack (A01d E19): one pack from input_select.zellen_pack (E5, E6), in the enclosure layout of E17 at large size.
+// Header with back link, name, master badge, stack, emergency remaining time, error text (E8), cell analysis and pack switching;
+// five switches in one row (E12); enclosure with lamps, type plate, BLE level and data age, SoC battery and
+// screen with the values in two blocks (E21), terminal caps at the bottom; cell block (own element); BLE diagnostics;
+// at the bottom Emergency and Pack reboot (BMS restart) with one second of holding (E7).
+// Each block in its own try/catch with a visible fallback (E10); states only via the guards from entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, StackConfig, ZELLEN_PACK, exists, numberOf, packEntity, secondsOf, stackOf, stateOf, textOf } from './entities';
 import { CapUnit, DASH, ageText, clock, count, num, packCell, snum, uptimeText } from './format';
@@ -14,13 +14,13 @@ interface SwitchDef {
   key: string;
   label: string;
   title: string;
-  /** Ausschalten nur mit einer Sekunde Halten (Ergaenzung zu E7: Charge, Discharge, Bluetooth) */
+  /** switching off only with one second of holding (addition to E7: Charge, Discharge, Bluetooth) */
   guard: boolean;
-  /** wirkt am ESP, nicht am BMS: bleibt bedienbar, wenn das Pack keine Daten liefert (A01d-12) */
+  /** acts on the ESP, not on the BMS: stays operable when the pack delivers no data (A01d-12) */
   esp?: boolean;
 }
 
-/** Fuenf Schalter (E19; Low-Balance entfaellt seit A01b E28). */
+/** Five switches (E19; low balance dropped since A01b E28). */
 const SWITCHES: SwitchDef[] = [
   { key: 'charging', label: 'Charge', title: 'Charge', guard: true },
   { key: 'discharging', label: 'Discharge', title: 'Discharge', guard: true },
@@ -29,7 +29,7 @@ const SWITCHES: SwitchDef[] = [
   { key: 'enable_bluetooth_connection', label: 'Bluetooth', title: 'Bluetooth (Aus trennt das Pack)', guard: true, esp: true },
 ];
 
-/** Client-Zustand beim letzten Eingriff von Ebene 1 (A01f, Live-Abfragen: 0 = keiner seit Boot). */
+/** Client state at the last intervention of level 1 (A01f, Live-Abfragen: 0 = none since boot). */
 const FIX_STATES: Record<number, string> = {
   0: 'keiner',
   2: 'IDLE',
@@ -41,7 +41,7 @@ const FIX_STATES: Record<number, string> = {
 
 interface Current {
   p: PackConfig;
-  /** Pack kommt aus dem Helfer; false = Rueckfall auf das erste konfigurierte Pack */
+  /** pack comes from the helper; false = fallback to the first configured pack */
   fromHelper: boolean;
   reason: string;
 }
@@ -61,7 +61,7 @@ export class PackCardPack extends LitElement {
   packs: PackConfig[] = [];
   stacks: StackConfig[] = [];
   now = 0;
-  /** Einheit der Kapazitaet wie im Bank-Display */
+  /** capacity unit as in the bank display */
   unit: CapUnit = 'Ah';
   speicherPath = 'speicher';
   zellenPath = 'zellen';
@@ -156,7 +156,7 @@ export class PackCardPack extends LitElement {
       .case-mid {
         gap: 16px;
       }
-      /* Batterie wie im Bank-Display frueher (58 px), damit der Bildschirm ohne Leerraum darueber und darunter steht */
+      /* battery as formerly in the bank display (58 px), so the screen stands without empty space above and below */
       .soc {
         width: 76px;
       }
@@ -264,7 +264,7 @@ export class PackCardPack extends LitElement {
     `,
   ];
 
-  /** Pack aus dem Helfer; fehlt er oder ist der Wert ungueltig, das erste konfigurierte Pack (E5, E6). */
+  /** Pack from the helper; if it is missing or the value is invalid, the first configured pack (E5, E6). */
   private current(): Current | undefined {
     const first = this.packs[0];
     if (!first) return undefined;
@@ -311,9 +311,9 @@ export class PackCardPack extends LitElement {
   }
 
   /**
-   * Grund, warum ein Bedienelement deaktiviert ist; leer, wenn es bedienbar ist (E10, Besonderheiten).
-   * Mit bmsPack wirkt der Befehl am BMS: ohne frische Daten des Packs erreicht er es nicht, der Schalter
-   * selbst bleibt dabei on/off statt unavailable (AU10 2026-11-02, A01d-12).
+   * Reason why a control is disabled; empty if it is operable (E10, Besonderheiten).
+   * With bmsPack the command acts on the BMS: without fresh data from the pack it does not reach it, while the switch
+   * itself stays on/off instead of unavailable (AU10 2026-11-02, A01d-12).
    */
   private reasonFor(id: string, bmsPack?: PackConfig): string {
     const s = this.hass?.states[id];
@@ -413,7 +413,7 @@ export class PackCardPack extends LitElement {
         @hold-complete=${() => this._switch(id, 'turn_off', true, bms)}
       ></pack-card-hold>`;
     }
-    // Einschalten (bei Charge, Discharge, Bluetooth) und Balancer/Float mit einfachem Tippen
+    // switching on (for Charge, Discharge, Bluetooth) and Balancer/Float with a single tap
     const service = d.guard ? 'turn_on' : 'toggle';
     return html`<button
       type="button"
@@ -518,8 +518,8 @@ export class PackCardPack extends LitElement {
   }
 
   /**
-   * BLE-Zeile (Entity-Ableitung): kurze Bezeichnungen in einer Zeile, die ausfuehrliche Bedeutung im title; fehlende
-   * Entitaeten werden uebersprungen, damit neue nach einem Flash ohne Nacharbeit erscheinen (E10).
+   * BLE line (entity derivation): short labels in one line, the detailed meaning in the title; missing
+   * entities are skipped so that new ones appear after a flash without rework (E10).
    */
   private renderDiag(p: PackConfig): TemplateResult {
     const h = this.hass;
@@ -552,9 +552,9 @@ export class PackCardPack extends LitElement {
     const rsId = packEntity(p, 'button', 'restart');
     const emOn = this.hass?.states[emId]?.state === 'on';
     const emReason = this.reasonFor(emId, p);
-    // Knopf ohne bisherigen Druck steht auf unknown: Normalzustand, bedienbar (Besonderheiten)
+    // a button never pressed is unknown: normal state, operable (Besonderheiten)
     const rsReason = this.reasonFor(rsId, p);
-    // Pack_1 ist Master am CAN zum Cerbo (Besonderheiten); A01f: dort nicht neu starten
+    // Pack_1 is master on the CAN bus to the Cerbo (Besonderheiten); A01f: do not restart it there
     const master = p.pack === 1;
     return html`<div class="holds">
       <pack-card-hold
@@ -588,7 +588,7 @@ export class PackCardPack extends LitElement {
     }
   }
 
-  /** Schalter: Zustand beim Ausloesen neu lesen; geschuetzte Schalter schalten nie per Tippen aus. */
+  /** Switch: re-read the state when triggered; protected switches never switch off by tapping. */
   private _switch(id: string, service: 'toggle' | 'turn_on' | 'turn_off', guard: boolean, bms?: PackConfig): void {
     if (this.reasonFor(id, bms)) return;
     const on = this.hass?.states[id]?.state === 'on';
@@ -608,17 +608,17 @@ export class PackCardPack extends LitElement {
     this._call('button', 'press', id, 'BMS-Neustart');
   }
 
-  /** Ah/kWh: an den Rahmen melden, der die Wahl merkt und an alle Ansichten weitergibt (E19). */
+  /** Ah/kWh: report to the frame, which remembers the choice and passes it to all views (E19). */
   private _setUnit = (u: CapUnit): void => {
     this.dispatchEvent(new CustomEvent(UNIT_EVENT, { detail: u, bubbles: true, composed: true }));
   };
 
-  /** Vorheriges/naechstes Pack: nur den Helfer setzen, die Ansicht bleibt (E5). */
+  /** Previous/next pack: only set the helper, the view stays (E5). */
   private _select(n: number): void {
     void selectPack(this.hass, n);
   }
 
-  /** „Zellanalyse“: Helfer auf das angezeigte Pack setzen, dann wechseln (Besonderheiten: Pack-Auswahl der Zellansicht). */
+  /** "Zellanalyse": set the helper to the displayed pack, then switch (Besonderheiten: pack selection of the cell view). */
   private _openCells = async (): Promise<void> => {
     const cur = this.current();
     if (cur) await selectPack(this.hass, cur.p.pack);

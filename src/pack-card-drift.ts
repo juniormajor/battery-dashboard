@@ -1,8 +1,8 @@
-// Drift der Leitzellen des gewaehlten Packs (A01d E18, A01c E6 und E10): Tageswerte der Langzeitstatistik von
-// sensor.zellen_drift_pack_<n>_hoch/_tief, geholt ueber den WebSocket-Befehl recorder/statistics_during_period
-// (period day, type mean, Einheit mV) und als Stufen gezeichnet; Achse symmetrisch um 0, Farben aus dem Theme (E15).
-// Je Pack ein Zwischenspeicher, neu geholt, wenn sich die Drift-Basis neu berechnet hat oder nach einer Stunde.
-// Eigenes Element, damit ein Fehler beim Abruf oder Zeichnen nur diesen Block trifft (E10).
+// Drift of the lead cells of the selected pack (A01d E18, A01c E6 and E10): daily values of the long-term statistics of
+// sensor.zellen_drift_pack_<n>_hoch/_tief, fetched via the WebSocket command recorder/statistics_during_period
+// (period day, type mean, unit mV) and drawn as steps; axis symmetric around 0, colors from the theme (E15).
+// One cache per pack, refetched when the drift base has been recalculated or after one hour.
+// Own element so that an error while fetching or drawing only hits this block (E10).
 import { LitElement, html, css, svg, PropertyValues, TemplateResult } from 'lit';
 import { Hass, HassEntity, exists, stateOf } from './entities';
 import { DASH, fmt, packCell, snum } from './format';
@@ -43,7 +43,7 @@ function toPoints(rows: StatRow[] | undefined): Point[] {
     .sort((a, b) => a.t - b.t);
 }
 
-/** Naechster runder Wert fuer die halbe Achse (mV). */
+/** Next round value for the half axis (mV). */
 export function niceMax(m: number): number {
   return NICE.find((x) => x >= m - 1e-9) ?? Math.ceil(m / 100) * 100;
 }
@@ -185,7 +185,7 @@ export class PackCardDrift extends LitElement {
     this._ro = undefined;
   }
 
-  /** Schluessel des Datenstands: Rechenzeitpunkt der Drift-Basis. */
+  /** Key of the data state: calculation time of the drift base. */
   private _key(): string {
     return stateOf(this.hass, DRIFT_BASIS)?.state ?? '';
   }
@@ -196,7 +196,7 @@ export class PackCardDrift extends LitElement {
     if (!n || !this.hass) return;
     const key = this._key();
     const c = this._cache.get(n);
-    // Fehler erst nach einer Minute erneut versuchen, sonst bei jedem Zustandswechsel
+    // retry errors only after one minute, otherwise on every state change
     if (c && c.key === key && Date.now() - c.at < (c.err ? 60000 : MAX_AGE_MS)) {
       if (this._entry !== c) {
         this._entry = c;

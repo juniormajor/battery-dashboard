@@ -1,7 +1,7 @@
-// Bank-Display (A01d E16): zwei gleich breite Haelften wie die Stacks darunter. Links die SoC-Batterie des Shunts wie
-// in den Gehaeusen (gleiche Breite, SoC und SoH darunter), daneben der Shunt-Block und darunter der zentrale Knopf
-// „Emergency“ (E7, eigenes Element); rechts der BMS-Master-Block (E21). Einzige Rechnung: Rest = installierte
-// Kapazitaet des Masters minus entnommene Ah des Shunts, gezeigt als „Kapazität: Rest (installiert)“.
+// Bank display (A01d E16): two halves of equal width like the stacks below. Left the SoC battery of the shunt as
+// in the enclosures (same width, SoC and SoH below), next to it the shunt block and below it the central button
+// "Emergency" (E7, own element); right the BMS master block (E21). Only calculation: remaining = installed
+// capacity of the master minus Ah drawn according to the shunt, shown as "Kapazität: Rest (installiert)".
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { BANK_MASTER, BANK_SHUNT, Hass, PackConfig, numberOf, secondsOf, stateOf, textOf } from './entities';
 import { CapUnit, DASH, capText, cellId, dhm, gxPack, num, snum } from './format';
@@ -10,8 +10,8 @@ import { battSvg, fallback, group, sharedStyles, tempLabel, val } from './ui';
 export type { CapUnit } from './format';
 
 /**
- * Alarme des BMS-Masters (enum no_alarm / warning / alarm), live gelesen an der Alt-Instanz am 2026-11-01.
- * Fehlende Entitaeten werden uebersprungen (E10).
+ * Alarms of the BMS master (enum no_alarm / warning / alarm), read live on the old instance on 2026-11-01.
+ * Missing entities are skipped (E10).
  */
 const ALARMS: [string, string][] = [
   ['cell_imbalance', 'Zellungleichgewicht'],
@@ -22,7 +22,7 @@ const ALARMS: [string, string][] = [
   ['internal_failure', 'interner Fehler'],
 ];
 
-/** 0 = kein Alarm, 1 = Warnung, 2 = Alarm (Victron-Kodierung 0/1/2 bzw. Text). */
+/** 0 = no alarm, 1 = warning, 2 = alarm (Victron encoding 0/1/2 or text). */
 function alarmLevel(state: string): number {
   const n = Number(state);
   if (state.trim() !== '' && Number.isFinite(n)) return n <= 0 ? 0 : n >= 2 ? 2 : 1;
@@ -42,9 +42,9 @@ export class PackCardBank extends LitElement {
 
   hass?: Hass;
   unit: CapUnit = 'Ah';
-  /** Packs fuer den zentralen Knopf Emergency */
+  /** packs for the central Emergency button */
   packs: PackConfig[] = [];
-  /** Zeitpunkt fuer das Datenalter der Packs, vom Rahmen getaktet */
+  /** timestamp for the data age of the packs, clocked by the frame */
   now = 0;
 
   static styles = [
@@ -56,7 +56,7 @@ export class PackCardBank extends LitElement {
       .wrap {
         container-type: inline-size;
       }
-      /* zwei gleich breite Haelften, Abstand wie zwischen den Stacks */
+      /* two halves of equal width, gap as between the stacks */
       .bank {
         background: var(--pc-screen);
         border: 1px solid var(--pc-line);
@@ -75,7 +75,7 @@ export class PackCardBank extends LitElement {
         gap: 8px 10px;
         min-width: 0;
       }
-      /* Batterie wie in den Gehaeusen (E17): 46 px breit, SoC und SoH darunter */
+      /* battery as in the enclosures (E17): 46 px wide, SoC and SoH below */
       .batt {
         grid-area: batt;
         display: grid;
@@ -117,7 +117,7 @@ export class PackCardBank extends LitElement {
       .grp .narrow {
         display: none;
       }
-      /* Haelften untereinander, sobald sie nicht mehr nebeneinander passen (E16, rund 700 px Bankbreite) */
+      /* halves stacked once they no longer fit side by side (E16, about 700 px bank width) */
       @container (max-width: 699px) {
         .bank {
           grid-template-columns: minmax(0, 1fr);
@@ -237,7 +237,7 @@ export class PackCardBank extends LitElement {
       const cnt = (x: number | undefined) => (x === undefined ? DASH : String(Math.round(x)));
       return group(
         [
-          // breit eine Zeile „Zelle max / min“, schmal zwei Zeilen, damit nichts umbricht (Container-Abfrage unten)
+          // wide: one line "Zelle max / min", narrow: two lines so nothing wraps (container query below)
           { k: 'Zelle max / min:', v: [cell('max_cell_voltage', 'max_voltage_cell_id'), cell('min_cell_voltage', 'min_voltage_cell_id')], cls: 'wide' },
           { k: 'Zelle max:', v: [cell('max_cell_voltage', 'max_voltage_cell_id')], cls: 'narrow' },
           { k: 'Zelle min:', v: [cell('min_cell_voltage', 'min_voltage_cell_id')], cls: 'narrow' },
@@ -260,8 +260,8 @@ export class PackCardBank extends LitElement {
   }
 
   /**
-   * Hoechste Zelltemperatur des BMS-Masters (Batteriefuehler ohne MOSFET, A01b) mit dem Pack aus der GX-Kennung MM::CC;
-   * die zweite Stelle ist kein eindeutiger Fuehler (Live 2026-11-02) und wird nicht gezeigt.
+   * Highest cell temperature of the BMS master (battery sensors without MOSFET, A01b) with the pack from the GX ID MM::CC;
+   * the second part is not a unique sensor (live 2026-11-02) and is not shown.
    */
   private renderTemp(): TemplateResult {
     const h = this.hass;

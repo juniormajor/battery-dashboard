@@ -1,16 +1,16 @@
-// Zentrales Emergency (A01d E7): ein Knopf „Emergency“ fuer alle Packs im Bank-Display, Ein und Aus je mit einer
-// Sekunde Halten; gefuellt, solange mindestens ein Pack Emergency an hat. Einzeln schaltet nur die Packansicht.
-// Packs ohne frische Daten gelten als nicht erreichbar und werden nicht geschaltet (A01d-12): ihr Schalter steht dann
-// weiter auf on/off; das steht im title des Knopfs.
+// Central Emergency (A01d E7): one "Emergency" button for all packs in the bank display, on and off each with
+// one second of holding; filled as long as at least one pack has Emergency on. Single packs are switched only in the pack view.
+// Packs without fresh data count as unreachable and are not switched (A01d-12): their switch then still
+// shows on/off; this is stated in the button's title.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, packEntity, stateOf } from './entities';
 import { packAge } from './pack-parts';
 import { fallback, sharedStyles } from './ui';
 
 interface EmergencyState {
-  /** schaltbare Schalter (vorhanden, nicht unavailable/unknown) */
+  /** switchable switches (present, not unavailable/unknown) */
   avail: string[];
-  /** Packs, deren Schalter fehlt oder nicht verfuegbar ist oder die keine frischen Daten liefern */
+  /** packs whose switch is missing or unavailable, or that deliver no fresh data */
   missing: number[];
   on: number;
 }
@@ -24,7 +24,7 @@ export class PackCardEmergency extends LitElement {
 
   hass?: Hass;
   packs: PackConfig[] = [];
-  /** Zeitpunkt fuer das Datenalter; 0 = nicht gesetzt, dann zaehlt jedes Pack als frisch */
+  /** timestamp for the data age; 0 = not set, then every pack counts as fresh */
   now = 0;
 
   static styles = [

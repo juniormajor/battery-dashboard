@@ -1,16 +1,16 @@
-// Zellblock der Packansicht (A01d E19): 16 Zellen in zwei Spalten (1–8 links, 9–16 rechts wie jk-bms-card), je Zelle
-// „Nr Spannung / Innenwiderstand“ ohne Ueberschrift und Kopfzeile, Zellrahmen so breit wie ihr Inhalt, mittig, hoechste Zelle gruen, niedrigste rot umrandet, Hintergrund nach
-// Abweichung vom Packmittel (Mockup devClass). Bei Balancing-Strom ungleich 0 der Stromfluss von der hoechsten zur
-// niedrigsten Zelle als SVG ueber dem Raster (jk-bms-card _updateFlowLine): Leitung, wandernde Punkte in Flussrichtung
-// und Pfeil an der Zielzelle; die Zellen des Balancers pulsierend markiert. Ohne Begleitzeile zu Minimum, Maximum und
-// Delta (E19). Eigenes Element, damit ein Fehler auf den Block begrenzt bleibt (E10).
+// Cell block of the pack view (A01d E19): 16 cells in two columns (1–8 left, 9–16 right as in jk-bms-card), each cell
+// "no. voltage / internal resistance" without heading or header row, cell frame as wide as its content, centered, highest cell outlined green, lowest red, background by
+// deviation from the pack mean (mockup devClass). With balancing current not 0, the current flow from the highest to the
+// lowest cell as SVG above the grid (jk-bms-card _updateFlowLine): line, dots moving in flow direction
+// and arrow at the target cell; the balancer cells marked with a pulse. No extra line for minimum, maximum and
+// delta (E19). Own element so that an error stays confined to the block (E10).
 import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, numberOf, packEntity, unitOf } from './entities';
 import { num, packCell, signed } from './format';
 import { CELLS, balancerState, extremeCells } from './pack-parts';
 import { fallback, sharedStyles, val } from './ui';
 
-/** Hintergrund nach Abweichung vom Packmittel in mV (Mockup: ueber 2, 5 und 10 mV). */
+/** Background by deviation from the pack mean in mV (mockup: above 2, 5 and 10 mV). */
 function devClass(mv: number | undefined): string {
   if (mv === undefined) return '';
   const a = Math.abs(mv);
@@ -45,7 +45,7 @@ export class PackCardCells extends LitElement {
         display: grid;
         gap: 6px;
       }
-      /* Zellrahmen so breit wie ihr Inhalt, beide Spalten mittig; die Fuge traegt den Balancing-Fluss */
+      /* cell frame as wide as its content, both columns centered; the gap carries the balancing flow */
       .grid {
         position: relative;
         display: grid;
@@ -108,7 +108,7 @@ export class PackCardCells extends LitElement {
         border-color: var(--pc-bad);
         box-shadow: 0 0 0 1px var(--pc-bad);
       }
-      /* Balancer-Zellen: pulsierender Umriss; outline statt Pseudoelement, damit nichts ueber die Zelle hinaus Platz braucht */
+      /* balancer cells: pulsing outline; outline instead of a pseudo-element so nothing needs space beyond the cell */
       .cell.bm {
         outline: 2px solid var(--pc-bal);
         outline-offset: 2px;
@@ -128,7 +128,7 @@ export class PackCardCells extends LitElement {
         z-index: 3;
         overflow: visible;
       }
-      /* Stromfluss des Balancers: Leitung, Punkte wandern von der hoechsten zur niedrigsten Zelle, Pfeil am Ziel */
+      /* balancer current flow: line, dots move from the highest to the lowest cell, arrow at the target */
       .flow .base {
         fill: none;
         stroke: color-mix(in srgb, var(--pc-bal) 30%, transparent);
@@ -299,8 +299,8 @@ export class PackCardCells extends LitElement {
   }
 
   /**
-   * Fluss wie im Mockup: vom inneren Rand der hoechsten Zelle zur Spaltenfuge, senkrecht, zum inneren Rand der niedrigsten;
-   * am Start ein Punkt, am Ziel ein Pfeil in Flussrichtung.
+   * Flow as in the mockup: from the inner edge of the highest cell to the column gap, vertically, to the inner edge of the lowest;
+   * a dot at the start, an arrow in flow direction at the target.
    */
   private _drawFlow(): void {
     try {
@@ -324,7 +324,7 @@ export class PackCardCells extends LitElement {
       };
       const s = inner(a);
       const t = inner(b);
-      // Pfeilspitze am Rand der Zielzelle, die Leitung endet an seiner Basis
+      // arrow tip at the edge of the target cell, the line ends at its base
       const dir = t.x >= gx ? 1 : -1;
       const L = 9;
       const baseX = t.x - dir * L;

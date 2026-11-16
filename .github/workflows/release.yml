@@ -1,7 +1,7 @@
-# Release bei Versionswechsel (A01d E11): Bei jedem Push auf main prueft der Workflow, ob es zur
-# Version aus package.json schon ein Release gibt. Wenn nicht, baut er und legt Tag und Release
-# v<Version> mit dist/battery-dashboard.js an. Tags werden nicht gepusht; ein mit GITHUB_TOKEN
-# angelegter Tag loest keinen weiteren Lauf aus.
+# Release on version change (A01d E11): on every push to main the workflow checks whether a release
+# exists for the version in package.json. If not, it builds and creates tag and release v<version>
+# with dist/battery-dashboard.js. Tags are not pushed; a tag created with GITHUB_TOKEN does not
+# trigger another run.
 name: release
 
 on:
@@ -24,7 +24,7 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Version pruefen
+      - name: Check version
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
@@ -32,21 +32,21 @@ jobs:
           tag="v$(node -p "require('./package.json').version")"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag gibt es schon, nichts zu tun."
+            echo "Release $tag exists already, nothing to do."
             echo "neu=false" >> "$GITHUB_OUTPUT"
           else
             echo "neu=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Abhaengigkeiten
+      - name: Install dependencies
         if: steps.version.outputs.neu == 'true'
         run: npm ci
 
-      - name: Bauen
+      - name: Build
         if: steps.version.outputs.neu == 'true'
         run: npm run build
 
-      - name: Tag und Release mit battery-dashboard.js
+      - name: Tag and release with battery-dashboard.js
         if: steps.version.outputs.neu == 'true'
         env:
           GH_TOKEN: ${{ github.token }}

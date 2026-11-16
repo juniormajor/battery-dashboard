@@ -1,5 +1,5 @@
-// Werkzeugkette nach dem Fork jk-bms-card (A01d AU2): rollup-plugin-typescript2 mit
-// include-Muster, lit wird mitgebuendelt; Ausgabe als ES-Modul fuer die Lovelace-Ressource.
+// Toolchain following the jk-bms-card fork (A01d AU2): rollup-plugin-typescript2 with
+// include pattern, lit is bundled; output as ES module for the Lovelace resource.
 import { readFileSync } from 'node:fs';
 import typescript from 'rollup-plugin-typescript2';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
@@ -7,7 +7,7 @@ import terser from '@rollup/plugin-terser';
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
-// ersetzt __VERSION__ nach dem TypeScript-Lauf durch die Version aus package.json
+// replaces __VERSION__ after the TypeScript run with the version from package.json
 const versionStamp = {
   name: 'version-stamp',
   transform(code) {

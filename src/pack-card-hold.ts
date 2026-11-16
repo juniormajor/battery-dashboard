@@ -1,8 +1,8 @@
-// Halteknopf (A01d E7): loest erst nach einer Sekunde Halten aus, Loslassen oder Verlassen davor bricht ab.
-// Maus, Touch und Tastatur (Leertaste/Enter halten). Deaktiviert mit Grund im title (E10).
-// plain: nur die Bezeichnung (Emergency, ESP reboot, Pack reboot), der Hinweis aufs Halten steht im title; gefuellt,
-// solange aktiv. Die Fuellung beim Halten laeuft auch bei „Animationen reduzieren“ (A01d E7).
-// Form „switch“: als Schalter der Packansicht (E19) fuer das Ausschalten von Charge, Discharge und Bluetooth.
+// Hold button (A01d E7): triggers only after one second of holding; releasing or leaving before that cancels.
+// Mouse, touch and keyboard (hold space/enter). Disabled with the reason in the title (E10).
+// plain: only the label (Emergency, ESP reboot, Pack reboot), the hint about holding is in the title; filled
+// while active. The fill while holding also runs with "reduce motion" (A01d E7).
+// Shape "switch": as a switch of the pack view (E19) for switching off Charge, Discharge and Bluetooth.
 import { LitElement, html, css, nothing, PropertyValues, TemplateResult } from 'lit';
 import { switchStyles } from './ui';
 
@@ -22,17 +22,17 @@ export class PackCardHold extends LitElement {
   };
 
   label = '';
-  /** Grund, warum der Knopf deaktiviert ist */
+  /** reason why the button is disabled */
   reason = '';
   tone: 'warn' | 'bad' = 'warn';
   disabled = false;
-  /** Zustand „an“: Knopf gefuellt bzw. Schalter an */
+  /** state "on": button filled or switch on */
   active = false;
-  /** button: Knopf mit „· halten“; switch: Schalter mit Hinweis „halten“ */
+  /** button: button with "· halten"; switch: switch with hint "halten" */
   variant: 'button' | 'switch' = 'button';
-  /** Knopf nur mit der Bezeichnung, ohne „· halten“ (Emergency); der Hinweis steht dann im title */
+  /** button with the label only, without "· halten" (Emergency); the hint is then in the title */
   plain = false;
-  /** Zusatz fuer den title, z. B. welche Packs nicht geschaltet werden */
+  /** addition to the title, e.g. which packs are not switched */
   info = '';
   private _going = false;
   private _timer?: number;
@@ -106,7 +106,7 @@ export class PackCardHold extends LitElement {
         font-weight: 400;
         padding: 5px 8px;
       }
-      /* Die Fuellung ist die einzige Rueckmeldung beim Halten und laeuft darum auch bei reduzierten Animationen. */
+      /* The fill is the only feedback while holding and therefore also runs with reduced motion. */
     `,
   ];
 

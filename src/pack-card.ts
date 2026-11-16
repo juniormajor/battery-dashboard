@@ -1,8 +1,8 @@
-// Rahmen der Karte (A01d E1, E2): eine Instanz je Ansicht, konfiguriert werden packs, stacks und die Klickziele.
-// Ansicht speicher: Kopf (Ah/kWh, Zellanalyse), Bank-Display (E16) mit dem zentralen Emergency (E7), Schrank (E17),
-// Legende. Speicher und Pack sind hoechstens MAX_W breit und mittig (E2), die Zellanalyse nutzt die volle Breite.
-// Ansicht pack: ein Pack aus input_select.zellen_pack (E5, E19), gezeichnet von pack-card-pack.
-// Ansicht zellen: Zellanalyse (E18) aus den sql-Sensoren der Zellauswertung (A01c), gezeichnet von pack-card-zellen.
+// Frame of the card (A01d E1, E2): one instance per view; configured are packs, stacks and the click targets.
+// View speicher: header (Ah/kWh, cell analysis), bank display (E16) with the central Emergency (E7), cabinet (E17),
+// legend. Speicher and pack are at most MAX_W wide and centered (E2); the cell analysis uses the full width.
+// View pack: one pack from input_select.zellen_pack (E5, E19), drawn by pack-card-pack.
+// View zellen: cell analysis (E18) from the sql sensors of the cell evaluation (A01c), drawn by pack-card-zellen.
 import { LitElement, html, css, unsafeCSS, PropertyValues, TemplateResult } from 'lit';
 import { Hass, PackConfig, StackConfig, normalizePacks, normalizeStacks, stackOf } from './entities';
 import { CapUnit } from './pack-card-bank';
@@ -16,18 +16,18 @@ export interface PackCardConfig {
   view?: View;
   packs: (number | PackConfig)[];
   stacks?: StackConfig[];
-  /** Pfad der Packansicht, relativ zum Dashboard oder absolut ab „/“ (Standard pack) */
+  /** path of the pack view, relative to the dashboard or absolute from "/" (default pack) */
   pack_path?: string;
-  /** Pfad der Zellanalyse, relativ zum Dashboard oder absolut ab „/“ (Standard zellen) */
+  /** path of the cell analysis, relative to the dashboard or absolute from "/" (default zellen) */
   zellen_path?: string;
-  /** Pfad der Ansicht speicher fuer den Ruecklink der Packansicht (Standard speicher) */
+  /** path of the speicher view for the back link of the pack view (default speicher) */
   speicher_path?: string;
 }
 
 const UNIT_KEY = 'pack-card-unit';
-/** Fensterereignis: jede Karteninstanz (Speicher, Pack) uebernimmt eine geaenderte Einheit sofort */
+/** Window event: every card instance (speicher, pack) applies a changed unit immediately */
 const UNIT_SYNC = 'pack-card-unit-sync';
-/** Hoechste Breite der Ansichten speicher und pack; ein Theme kann sie ueber --pack-card-max-width aendern. */
+/** Maximum width of the views speicher and pack; a theme can change it via --pack-card-max-width. */
 const MAX_W = '900px';
 const TICK_MS = 5000;
 
@@ -96,7 +96,7 @@ export class PackCard extends LitElement {
         color: var(--pc-fg2);
         font-size: 13px;
       }
-      /* Schrank: Stacks nebeneinander, unter rund 700 px (2 x 330 px) untereinander; nie breiter als die Karte (R4) */
+      /* cabinet: stacks side by side, below about 700 px (2 x 330 px) stacked; never wider than the card (R4) */
       .cab {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
@@ -192,7 +192,7 @@ export class PackCard extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    // HA haelt die Ansichten vor: beim Wiedereinhaengen die gemerkte Einheit uebernehmen und Aenderungen mithoeren
+    // HA keeps views mounted: on reconnect apply the remembered unit and listen for changes
     this._unit = readUnit();
     window.addEventListener(UNIT_SYNC, this._onUnitSync);
     this._tick = window.setInterval(() => {
@@ -210,7 +210,7 @@ export class PackCard extends LitElement {
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has('hass')) {
       this._now = Date.now();
-      // Statusfarben fuer hell/dunkel (E15)
+      // status colors for light/dark (E15)
       this.toggleAttribute('dark', !!this.hass?.themes?.darkMode);
     }
   }
@@ -274,7 +274,7 @@ export class PackCard extends LitElement {
     </div>`;
   }
 
-  /** Rahmen min/max SoC ueber die Packs mit frischen Daten; je Pack eigener try, damit ein Pack die anderen nicht mitnimmt. */
+  /** Min/max SoC frames over the packs with fresh data; one try per pack so that one pack does not take the others down. */
   private frames(): Map<number, SocFrame> {
     const socs = new Map<number, number>();
     for (const p of this._packs) {
@@ -343,7 +343,7 @@ export class PackCard extends LitElement {
     try {
       window.localStorage.setItem(UNIT_KEY, u);
     } catch {
-      /* ohne Speicher gilt die Wahl nur fuer diese Seite */
+      /* without storage the choice applies only to this page */
     }
     window.dispatchEvent(new CustomEvent(UNIT_SYNC, { detail: u }));
   }

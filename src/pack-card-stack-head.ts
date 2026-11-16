@@ -1,7 +1,7 @@
-// Stackkopf (A01d E17): frei waehlbarer Name, ESP-Werte (Innentemperatur mit Thermometer und „ESP“, WLAN) und in
-// derselben Zeile „ESP reboot“ mit einer Sekunde Halten (E7); die Laufzeit des ESP steht im Hinweis des Knopfs.
-// Der Name fuehrt Admins auf die Geraeteseite des ESP in HA (/config/devices/device/<id>, Geraet aus der Registry).
-// Diagnose-IDs ohne Bereichspraefix nach A01b E15.
+// Stack head (A01d E17): freely chosen name, ESP values (internal temperature with thermometer and "ESP", Wi-Fi) and in
+// the same line "ESP reboot" with one second of holding (E7); the ESP runtime is in the button's hint.
+// The name takes admins to the device page of the ESP in HA (/config/devices/device/<id>, device from the registry).
+// Diagnostic IDs without area prefix per A01b E15.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, StackConfig, deviceOf, isAvailable, numberOf, secondsOf, stackDiagEntity, stackEntity } from './entities';
 import { num, snum, uptimeText } from './format';
@@ -50,7 +50,7 @@ export class PackCardStackHead extends LitElement {
         padding: 3px 10px;
         font-size: 12.5px;
       }
-      /* Handy: Name, ESP-Werte und „ESP reboot“ in einer Zeile */
+      /* phone: name, ESP values and "ESP reboot" in one line */
       @container (max-width: 379px) {
         .h {
           gap: 4px 7px;
@@ -107,7 +107,7 @@ export class PackCardStackHead extends LitElement {
     }
   }
 
-  /** Stackname als Link auf die Geraeteseite des ESP, nur fuer Admins und wenn die Registry das Geraet kennt. */
+  /** Stack name as link to the device page of the ESP, only for admins and if the registry knows the device. */
   private renderName(name: string, ids: string[]): TemplateResult {
     const dev = deviceOf(this.hass, ids);
     if (!dev || !this.hass?.user?.is_admin) return html`<span class="name">${name}</span>`;

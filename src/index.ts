@@ -1,4 +1,4 @@
-// Einstieg: registriert die Elemente einmal und traegt die Karte in den Kartenwaehler ein.
+// Entry point: registers the elements once and adds the card to the card picker.
 import { PackCard } from './pack-card';
 import { PackCardTile } from './pack-card-tile';
 import { PackCardHold } from './pack-card-hold';

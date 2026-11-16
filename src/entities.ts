@@ -1,16 +1,16 @@
-// Entity-Ableitung aus der Packnummer (A01d, Abschnitt „Entity-Ableitung“) und Guard-Helfer (E10).
+// Entity derivation from the pack number (A01d, section "Entity-Ableitung") and guard helpers (E10).
 
 export interface PackConfig {
   pack: number;
-  /** abweichendes Praefix statt pv_pack_<n> */
+  /** custom prefix instead of pv_pack_<n> */
   prefix?: string;
-  /** abweichender Stack statt ceil(pack / 3) */
+  /** custom stack instead of ceil(pack / 3) */
   stack?: number;
 }
 
 export interface StackConfig {
   stack: number;
-  /** in der Kartenkonfiguration frei waehlbarer Name (E17) */
+  /** name chosen freely in the card configuration (E17) */
   name?: string;
 }
 
@@ -30,24 +30,24 @@ export interface Hass {
     data?: Record<string, unknown>,
     target?: Record<string, unknown>,
   ) => Promise<unknown>;
-  /** Entity-Registry des Frontends (EntityRegistryDisplayEntry): Geraet einer Entitaet fuer Links auf die Geraeteseite */
+  /** entity registry of the frontend (EntityRegistryDisplayEntry): device of an entity for links to the device page */
   entities?: Record<string, { device_id?: string } | undefined>;
-  /** angemeldeter Benutzer; die Geraeteseite unter /config ist nur fuer Admins erreichbar */
+  /** logged-in user; the device page under /config is only reachable for admins */
   user?: { is_admin?: boolean };
-  /** WebSocket-Befehl ueber die Verbindung des Frontends (Drift: recorder/statistics_during_period, A01c E6) */
+  /** WebSocket command over the frontend connection (drift: recorder/statistics_during_period, A01c E6) */
   callWS?: <T>(msg: Record<string, unknown>) => Promise<T>;
 }
 
 export const BANK_SHUNT = 'sensor.victron_mqtt_battery_279_battery_';
 export const BANK_MASTER = 'sensor.victron_mqtt_battery_512_battery_';
 
-/** Brueckenhelfer fuer Pack- und Zellansicht (E6), Optionen Pack_1 bis Pack_6 */
+/** Bridge helper for the pack and cell views (E6), options Pack_1 to Pack_6 */
 export const ZELLEN_PACK = 'input_select.zellen_pack';
 
-/** Ab diesem Datenalter von total_runtime gilt ein Pack als ohne Daten (Ebene 1 des ESP-Watchdogs, A01f E21). */
+/** From this data age of total_runtime on, a pack counts as without data (level 1 of the ESP watchdog, A01f E21). */
 export const STALE_S = 180;
 
-/** Nennspannung fuer die Umrechnung Ah -> kWh (E16: 16 x 3,2 V) */
+/** Nominal voltage for converting Ah -> kWh (E16: 16 x 3.2 V) */
 export const NOMINAL_V = 51.2;
 
 export function stackOf(p: PackConfig): number {
@@ -64,12 +64,12 @@ export function stackEntity(stack: number, p: PackConfig | null, domain: string,
     : `${domain}.pv_battery_stack_${stack}_${key}`;
 }
 
-/** Diagnose des ESP ohne Bereichspraefix (A01b E15): sensor.battery_stack_<s>_<key> */
+/** ESP diagnostics without area prefix (A01b E15): sensor.battery_stack_<s>_<key> */
 export function stackDiagEntity(stack: number, key: string): string {
   return `sensor.battery_stack_${stack}_${key}`;
 }
 
-/** Zustand einer Entitaet oder undefined, wenn sie fehlt, unavailable oder unknown ist. */
+/** State of an entity, or undefined if it is missing, unavailable or unknown. */
 export function stateOf(hass: Hass | undefined, entityId: string): HassEntity | undefined {
   const s = hass?.states[entityId];
   if (!s || s.state === 'unavailable' || s.state === 'unknown') return undefined;
@@ -83,19 +83,19 @@ export function numberOf(hass: Hass | undefined, entityId: string): number | und
   return Number.isFinite(n) ? n : undefined;
 }
 
-/** Text eines Textsensors, leer und fehlend als undefined. */
+/** Text of a text sensor; empty and missing as undefined. */
 export function textOf(hass: Hass | undefined, entityId: string): string | undefined {
   const t = stateOf(hass, entityId)?.state.trim();
   return t ? t : undefined;
 }
 
-/** Bedienbar: vorhanden und nicht unavailable. Ein Knopf steht ohne bisherigen Druck auf unknown (A01d, Besonderheiten). */
+/** Operable: present and not unavailable. A button that was never pressed is unknown (A01d, Besonderheiten). */
 export function isAvailable(hass: Hass | undefined, entityId: string): boolean {
   const s = hass?.states[entityId];
   return !!s && s.state !== 'unavailable';
 }
 
-/** Geraete-ID der ersten Entitaet mit Geraet aus der Registry des Frontends, sonst undefined. */
+/** Device ID of the first entity with a device from the frontend registry, otherwise undefined. */
 export function deviceOf(hass: Hass | undefined, entityIds: string[]): string | undefined {
   for (const id of entityIds) {
     const d = hass?.entities?.[id]?.device_id;
@@ -113,7 +113,7 @@ export function unitOf(hass: Hass | undefined, entityId: string): string {
   return typeof u === 'string' ? u : '';
 }
 
-/** Alter des letzten gueltigen Werts in Sekunden aus last_updated (A01d, Besonderheiten: Datenalter). */
+/** Age of the last valid value in seconds from last_updated (A01d, Besonderheiten: data age). */
 export function ageSeconds(hass: Hass | undefined, entityId: string, now: number): number | undefined {
   const s = stateOf(hass, entityId);
   if (!s) return undefined;
@@ -122,7 +122,7 @@ export function ageSeconds(hass: Hass | undefined, entityId: string, now: number
   return Math.max(0, (now - t) / 1000);
 }
 
-/** Zahl in Sekunden, umgerechnet nach unit_of_measurement (Restlaufzeit, Laufzeit). */
+/** Number in seconds, converted according to unit_of_measurement (remaining time, runtime). */
 export function secondsOf(hass: Hass | undefined, entityId: string): number | undefined {
   const v = numberOf(hass, entityId);
   if (v === undefined) return undefined;

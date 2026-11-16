@@ -1,6 +1,6 @@
-// Mock-hass aus den Live-Werten der Alt-Instanz vom 2026-11-02 (ha_eval_template), fuer den Rendertest.
-// Varianten ueber URL-Parameter: bal=<pack> setzt Balancing an diesem Pack, err=<pack> setzt einen Fehlertext,
-// em=<pack> schaltet Emergency an, off=<pack> laesst das Pack ohne frische Daten.
+// Mock hass from the live values of the old instance on 2026-11-02 (ha_eval_template), for the render test.
+// Variants via URL parameters: bal=<pack> sets balancing on this pack, err=<pack> sets an error text,
+// em=<pack> switches Emergency on, off=<pack> leaves the pack without fresh data.
 (function () {
   const q = new URLSearchParams(location.search);
   const now = Date.now();

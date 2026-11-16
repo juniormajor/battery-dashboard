@@ -1,4 +1,4 @@
-// Gemeinsame Bausteine: anklickbarer Wert (E4), spaltenbuendige Gruppe (E21), Navigation, Rueckfall (E10), Stile (E15).
+// Shared building blocks: clickable value (E4), column-aligned group (E21), navigation, fallback (E10), styles (E15).
 import { css, html, TemplateResult } from 'lit';
 import { Hass, ZELLEN_PACK, exists, stateOf } from './entities';
 import { CapUnit, fmt } from './format';
@@ -7,7 +7,7 @@ export function fireMoreInfo(node: EventTarget, entityId: string): void {
   node.dispatchEvent(new CustomEvent('hass-more-info', { detail: { entityId }, bubbles: true, composed: true }));
 }
 
-/** Wert als Klickziel auf more-info seiner Entitaet; fehlt die Entitaet, ist er nicht anklickbar. */
+/** Value as click target opening more-info of its entity; if the entity is missing, it is not clickable. */
 export function val(node: EventTarget, hass: Hass | undefined, entityId: string, content: unknown, cls = ''): TemplateResult {
   const ok = exists(hass, entityId);
   return html`<button
@@ -24,21 +24,21 @@ export function val(node: EventTarget, hass: Hass | undefined, entityId: string,
 }
 
 export interface GroupLine {
-  /** Bezeichnung mit Doppelpunkt */
+  /** label with colon */
   k: unknown;
-  /** bis zu drei Werte, getrennt durch „/“ */
+  /** up to three values, separated by "/" */
   v: unknown[];
-  /** ein Wert ueber alle Wertspalten */
+  /** one value spanning all value columns */
   span?: boolean;
-  /** kein „/“ vor dem dritten Wert (Zusatz wie die Balancer-Zellen) */
+  /** no "/" before the third value (addition such as the balancer cells) */
   nosep?: boolean;
-  /** Klasse fuer Bezeichnung und Werte, z. B. wide/narrow fuer Zeilen, die nur breit bzw. nur schmal erscheinen */
+  /** class for label and values, e.g. wide/narrow for rows that appear only wide or only narrow */
   cls?: string;
 }
 
 /**
- * „Bezeichnung: Wert / Wert / Wert“ (E21): Bezeichnungen buendig in einer Spalte, die Werte einer Zeile direkt dahinter
- * linksbuendig, getrennt durch „/“. Keine Wertspalten ueber Zeilen hinweg, damit verschieden lange Werte keine Luecken reissen.
+ * "Label: value / value / value" (E21): labels aligned in one column, the values of a row directly behind them,
+ * left-aligned, separated by "/". No value columns across rows, so values of different length leave no gaps.
  */
 export function group(lines: GroupLine[], cls = ''): TemplateResult {
   return html`<div class="grp ${cls}">
@@ -58,19 +58,19 @@ export const thermo = html`<svg class="ico" viewBox="0 0 12 20" role="img" aria-
 </svg>`;
 
 /**
- * Temperaturbezeichnung mit Thermometer (E20, E21): „max“ nur bei einem echten Maximum ueber mehrere Fuehler,
- * sonst der Fuehler selbst (IC, T1, T2, T4, T5, ESP).
+ * Temperature label with thermometer (E20, E21): "max" only for a true maximum over several sensors,
+ * otherwise the sensor itself (IC, T1, T2, T4, T5, ESP).
  */
 export function tempLabel(what: string, colon = true): TemplateResult {
   return html`<span class="tl">${thermo}${what}${colon ? ':' : ''}</span>`;
 }
 
-/** Ereignis, mit dem eine Ansicht die Einheit der Kapazitaet an die Karte meldet (Packansicht -> Rahmen). */
+/** Event with which a view reports the capacity unit to the card (pack view -> frame). */
 export const UNIT_EVENT = 'pack-card-unit';
 
 /**
- * Umschalter Ah/kWh fuer die Kapazitaet (E16, E19): gleiche Optik in Speicher und Pack; die Wahl gilt fuer alle
- * Ansichten und wird je Browser gemerkt (Rahmen pack-card).
+ * Ah/kWh toggle for the capacity (E16, E19): same look in speicher and pack; the choice applies to all
+ * views and is remembered per browser (frame pack-card).
  */
 export function unitSwitch(unit: CapUnit, set: (u: CapUnit) => void): TemplateResult {
   const b = (u: CapUnit) =>
@@ -78,7 +78,7 @@ export function unitSwitch(unit: CapUnit, set: (u: CapUnit) => void): TemplateRe
   return html`<span class="seg" role="group" aria-label="Kapazität in">${b('Ah')}${b('kWh')}</span>`;
 }
 
-/** Ansichtspfad: absolut ab „/“, sonst relativ zum aktuellen Dashboard (/<dashboard-url>/<pfad>). */
+/** View path: absolute from "/", otherwise relative to the current dashboard (/<dashboard-url>/<path>). */
 export function viewPath(p: string): string {
   if (p.startsWith('/')) return p;
   const dash = window.location.pathname.split('/').filter(Boolean)[0] ?? 'lovelace';
@@ -91,8 +91,8 @@ export function navigate(path: string): void {
 }
 
 /**
- * Pack-Helfer setzen (E5, E6): input_select.zellen_pack auf Pack_<n>, nur wenn der Helfer da ist und die Option kennt.
- * Fehler werden nur gemeldet; der Aufrufer navigiert danach trotzdem (E6: navigate kann keinen Parameter mitgeben).
+ * Set the pack helper (E5, E6): input_select.zellen_pack to Pack_<n>, only if the helper exists and knows the option.
+ * Errors are only reported; the caller navigates anyway (E6: navigate cannot pass a parameter).
  */
 export async function selectPack(hass: Hass | undefined, n: number): Promise<void> {
   const option = `Pack_${n}`;
@@ -110,8 +110,8 @@ export async function selectPack(hass: Hass | undefined, n: number): Promise<voi
 }
 
 /**
- * Senkrechte Batterie mit SoC-Fuellung (Bank-Display E16, Gehaeuse E17, Packansicht E19); Groesse setzt das CSS des
- * Aufrufers. vh ist die Hoehe im viewBox bei 58 Breite: 108 schlank, 90 gedrungen (seit v0.5.2 ueberall).
+ * Vertical battery with SoC fill (bank display E16, enclosure E17, pack view E19); size is set by the caller's
+ * CSS. vh is the height in the viewBox at width 58: 108 slim, 90 stocky (everywhere since v0.5.2).
  */
 export function battSvg(soc: number | undefined, vh = 90): TemplateResult {
   const fillMax = vh - 22;
@@ -127,22 +127,22 @@ export function battSvg(soc: number | undefined, vh = 90): TemplateResult {
   </svg>`;
 }
 
-/** Sichtbarer Rueckfall eines Bausteins (E10). */
+/** Visible fallback of a building block (E10). */
 export function fallback(what: string, e: unknown): TemplateResult {
   console.warn(`pack-card: ${what} nicht gezeichnet`, e);
   return html`<div class="fail">${what}: Daten unvollständig</div>`;
 }
 
-/** Fuellfarbe des SoC: ueber 50 % gut, ueber 20 % Warnung, darunter schlecht (Mockup socColor). */
+/** SoC fill color: above 50 % good, above 20 % warning, below bad (mockup socColor). */
 export function socColor(soc: number | undefined): string {
   if (soc === undefined) return 'transparent';
   return soc > 50 ? 'var(--pc-ok)' : soc > 20 ? 'var(--pc-warn)' : 'var(--pc-bad)';
 }
 
 /**
- * Farbvariablen (E15): Flaechen, Text und Linien aus dem HA-Theme; Statusfarben eigene Variablen
- * mit getrennten Werten fuer hell und dunkel, umgeschaltet ueber das Attribut dark (hass.themes.darkMode).
- * Feste Werte nur als Rueckfall im var(); ein Theme kann sie ueber --pack-card-*-color ueberschreiben.
+ * Color variables (E15): surfaces, text and lines from the HA theme; status colors are own variables
+ * with separate values for light and dark, switched via the attribute dark (hass.themes.darkMode).
+ * Fixed values only as fallback in var(); a theme can override them via --pack-card-*-color.
  */
 export const themeVars = css`
   :host {
@@ -160,7 +160,7 @@ export const themeVars = css`
     --pc-bad: var(--pack-card-bad-color, #c62828);
     --pc-bal: var(--pack-card-bal-color, #00838f);
     --pc-low: var(--pack-card-low-color, #1f63b8);
-    /* Gehaeuse nach dem realen Pack (E17): Typenschild, Rahmen des Bildschirms, Polkappen Plus (orange) und Minus */
+    /* enclosure modeled on the real pack (E17): type plate, screen bezel, terminal caps plus (orange) and minus */
     --pc-plate: var(--pack-card-plate-color, #f7f7f5);
     --pc-plate-fg: var(--pack-card-plate-text-color, #161616);
     --pc-bezel: var(--pack-card-bezel-color, #34373b);
@@ -300,7 +300,7 @@ export const sharedStyles = css`
     border-radius: 8px;
   }
 
-  /* Gruppe nach E21: Bezeichnung | Werte der Zeile, linksbuendig hinter der Bezeichnungsspalte */
+  /* group per E21: label | values of the row, left-aligned behind the label column */
   .grp {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
@@ -343,9 +343,9 @@ export const sharedStyles = css`
 `;
 
 /**
- * Schalter der Packansicht (E19, E12: ohne Ein-/Aus-Beschriftung, der Knopf zeigt den Zustand). Gemeinsam fuer den
- * Tippschalter und den Halteknopf in Schalterform. Unter 640 px Containerbreite Bezeichnung ueber dem Knopf,
- * damit die fuenf Schalter auch auf dem Handy in einer Zeile bleiben.
+ * Switch of the pack view (E19, E12: without on/off labels, the knob shows the state). Shared by the
+ * tap switch and the hold button in switch shape. Below 640 px container width the label goes above the knob,
+ * so the five switches stay in one row even on a phone.
  */
 export const switchStyles = css`
   .sw {

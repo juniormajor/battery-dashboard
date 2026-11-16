@@ -1,8 +1,8 @@
-// Gehaeuse eines Packs (A01d E17, E21) nach dem realen Pack im PV-Raum. Eigenes Element, damit ein Fehler auf dieses
-// Pack begrenzt bleibt (E10, R6). Oben in der Mitte das Typenschild „Pack n“ (Klickziel E4), rechts BLE-Pegel und
-// Datenalter; darunter links die SoC-Batterie mit SoC und SoH, rechts der Bildschirm im Rahmen mit Fehlertext (E8),
-// „U / I / P“, „Kapazität“ (Rest und volle Kapazitaet in der Einheit des Bank-Displays), „ΔU / I Bal“ und der
-// hoechsten Temperatur mit Fuehler; unten Polkappen und Lampen RUN/ALM/BAL/EMG.
+// Enclosure of a pack (A01d E17, E21) modeled on the real pack in the PV room. Own element so that an error stays confined to
+// this pack (E10, R6). Top center the type plate "Pack n" (click target E4), right BLE level and
+// data age; below, left the SoC battery with SoC and SoH, right the screen in its bezel with the error text (E8),
+// "U / I / P", "Kapazität" (remaining and full capacity in the unit of the bank display), "ΔU / I Bal" and the
+// highest temperature with its sensor; at the bottom terminal caps and lamps RUN/ALM/BAL/EMG.
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { Hass, PackConfig, STALE_S, ZELLEN_PACK, ageSeconds, numberOf, packEntity, stateOf, textOf } from './entities';
 import { CapUnit, DASH, num, snum } from './format';
@@ -11,7 +11,7 @@ import { battSvg, fallback, group, navigate, selectPack, sharedStyles, tempLabel
 
 export type SocFrame = '' | 'lo' | 'hi';
 
-/** Daten fuer die Rahmen min/max SoC im Rahmen der Karte: SoC nur, wenn das Pack frische Daten liefert. */
+/** Data for the min/max SoC frames within the card: SoC only if the pack delivers fresh data. */
 export function packSocForFrame(hass: Hass | undefined, p: PackConfig, now: number): number | undefined {
   const age = ageSeconds(hass, packEntity(p, 'sensor', 'total_runtime'), now);
   if (age === undefined || age > STALE_S) return undefined;
@@ -31,11 +31,11 @@ export class PackCardTile extends LitElement {
   hass?: Hass;
   pack?: PackConfig;
   frame: SocFrame = '';
-  /** Zeitpunkt fuer das Datenalter, vom Rahmen getaktet */
+  /** timestamp for the data age, clocked by the frame */
   now = 0;
-  /** Einheit der Kapazitaet wie im Bank-Display (Ah/kWh, gemerkt je Browser) */
+  /** capacity unit as in the bank display (Ah/kWh, remembered per browser) */
   unit: CapUnit = 'Ah';
-  /** Pfad der Packansicht (Kartenkonfiguration pack_path) */
+  /** path of the pack view (card configuration pack_path) */
   packPath = 'pack';
 
   static styles = [
@@ -216,7 +216,7 @@ export class PackCardTile extends LitElement {
     );
   }
 
-  /** „Pack n“: Helfer setzen, danach Ansicht wechseln (E4, E5, E6). */
+  /** "Pack n": set the helper, then switch the view (E4, E5, E6). */
   private _openPack = async (): Promise<void> => {
     const p = this.pack;
     if (!p) return;
