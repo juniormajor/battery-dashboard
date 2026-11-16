@@ -1,7 +1,7 @@
 // View pack (A01d E19): one pack from input_select.zellen_pack (E5, E6), in the enclosure layout of E17 at large size.
 // Header with back link, name, master badge, stack, emergency remaining time, error text (E8), cell analysis and pack switching;
-// five switches in one row (E12); enclosure with lamps, type plate, BLE level and data age, SoC battery and
-// screen with the values in two blocks (E21), terminal caps at the bottom; cell block (own element); BLE diagnostics;
+// five switches in one card (E12, E26); enclosure card with type plate, BLE level and data age, SoC battery,
+// the values in two areas (E21) and the lamps; cell card (own element); BLE diagnostics;
 // at the bottom Emergency and Pack reboot (BMS restart) with one second of holding (E7).
 // Each block in its own try/catch with a visible fallback (E10); states only via the guards from entities.
 import { LitElement, html, css, TemplateResult } from 'lit';
@@ -78,21 +78,16 @@ export class PackCardPack extends LitElement {
       .pv {
         container-type: inline-size;
         display: grid;
-        gap: 12px;
+        gap: 8px;
         min-width: 0;
       }
       .head {
         display: flex;
         align-items: center;
-        gap: 6px 10px;
+        gap: 8px;
+        min-height: 40px;
         flex-wrap: wrap;
         min-width: 0;
-      }
-      .head h2 {
-        font-size: 20px;
-        font-weight: 500;
-        margin: 0;
-        white-space: nowrap;
       }
       .head .v {
         max-width: 100%;
@@ -100,63 +95,35 @@ export class PackCardPack extends LitElement {
       .head .errtxt {
         white-space: normal;
         text-align: left;
-        border-radius: 8px;
       }
       .nav {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
       }
-      .btn {
-        border: 1px solid var(--pc-line);
-        background: var(--pc-raise);
-        color: var(--pc-fg);
-        border-radius: 8px;
-        padding: 5px 11px;
-        cursor: pointer;
-        font: inherit;
-        font-size: 13px;
-        white-space: nowrap;
-      }
-      .btn:hover:not(:disabled) {
-        border-color: var(--pc-fg3);
-      }
-      .btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-      .btn:focus-visible {
-        outline: 2px solid var(--pc-accent);
-        outline-offset: 1px;
-      }
-      .btn.pri {
-        background: var(--pc-accent);
-        color: var(--text-primary-color, var(--pc-card));
-        border-color: transparent;
-        font-weight: 500;
-      }
+      /* five switches in one card, separated by lines (E19, E26) */
       .ctrls {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 6px;
+        overflow: hidden;
+      }
+      .ctrls > * + * {
+        border-left: 1px solid var(--pc-line);
       }
       .ctrls pack-card-hold {
         display: block;
         min-width: 0;
       }
       .case {
-        padding: 8px 14px 0;
-        gap: 8px;
-      }
-      .plate {
-        font-size: 17px;
-        padding: 2px 16px;
+        border-radius: var(--pc-r-lg);
+        padding: 16px;
+        gap: 12px;
       }
       .case-mid {
         gap: 16px;
       }
-      /* battery as formerly in the bank display (58 px), so the screen stands without empty space above and below */
+      /* battery as in the bank display (58 px), so the value area stands without empty space above and below */
       .soc {
         width: 76px;
       }
@@ -164,38 +131,41 @@ export class PackCardPack extends LitElement {
         width: 58px;
         height: 90px;
       }
-      .soc b {
-        font-size: 14px;
-      }
       .soc .soh {
-        font-size: 11.5px;
+        font-size: var(--pc-fs-s);
       }
-      .scr.grps {
+      /* two value areas side by side (E21), each on the quiet fill (E26) */
+      .bezel .scr.grps {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, max-content));
-        justify-content: start;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
-        padding: 8px;
+        padding: 0;
+        background: none;
       }
       .grps .grp {
-        border: 1px solid var(--pc-line);
-        border-radius: 8px;
-        padding: 6px 10px;
-        background: color-mix(in srgb, var(--pc-card) 55%, transparent);
+        border-radius: var(--pc-r-md);
+        padding: 8px 12px;
+        background: var(--pc-screen);
+      }
+      .grps.t-soft .grp {
+        background: color-mix(in srgb, var(--pc-soft) 13%, var(--pc-screen));
+      }
+      .grps.t-warn .grp {
+        background: color-mix(in srgb, var(--pc-warn) 15%, var(--pc-screen));
+      }
+      .grps.t-bad .grp {
+        background: color-mix(in srgb, var(--pc-bad) 18%, var(--pc-screen));
       }
       .diag {
         display: flex;
         flex-wrap: wrap;
-        gap: 2px 14px;
-        font-size: 12.5px;
+        gap: 4px 16px;
         color: var(--pc-fg2);
-        padding: 6px 10px;
-        border-radius: 8px;
-        background: var(--pc-raise);
+        padding: 12px 16px;
       }
       .diag b {
         color: var(--pc-fg);
-        font-weight: 500;
+        font-weight: var(--ha-font-weight-medium, 500);
       }
       .diag .v {
         color: var(--pc-fg);
@@ -208,19 +178,14 @@ export class PackCardPack extends LitElement {
       .holds pack-card-hold {
         display: block;
       }
-      .holds pack-card-hold::part(button) {
-        padding: 10px;
-      }
       @container (max-width: 719px) {
-        .scr.grps {
+        .bezel .scr.grps {
           grid-template-columns: minmax(0, 1fr);
-          gap: 6px;
-          padding: 5px;
         }
       }
       @container (max-width: 639px) {
         .case {
-          padding: 6px 8px 0;
+          padding: 12px;
         }
         .case-mid {
           gap: 8px;
@@ -233,12 +198,12 @@ export class PackCardPack extends LitElement {
           height: 71px;
         }
         .soc b {
-          font-size: 12px;
+          font-size: var(--pc-fs-s);
         }
         .grps .grp {
-          font-size: 11.5px;
-          column-gap: 6px;
-          padding: 4px 6px;
+          font-size: var(--pc-fs-s);
+          column-gap: 8px;
+          padding: 8px;
         }
         .grps .grp .gk {
           white-space: normal;
@@ -246,19 +211,13 @@ export class PackCardPack extends LitElement {
         }
       }
       @container (max-width: 519px) {
-        .head h2 {
-          font-size: 18px;
-        }
-        .ctrls {
-          gap: 4px;
-        }
         .holds {
           grid-template-columns: 1fr;
         }
         .diag {
-          font-size: 12px;
-          gap: 2px 12px;
-          padding: 6px 8px;
+          font-size: var(--pc-fs-s);
+          gap: 4px 12px;
+          padding: 12px;
         }
       }
     `,
@@ -355,9 +314,9 @@ export class PackCardPack extends LitElement {
           : `${ZELLEN_PACK} kennt Pack_${m} nicht`;
     return html`<div class="head">
       <button type="button" class="link" @click=${() => navigate(viewPath(this.speicherPath))}>← Speicher</button>
-      <h2>Pack ${n}</h2>
-      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}
-      <span class="tag mut" title=${`Stack ${s}`}>${stackName}</span>
+      <h2 class="ttl">Pack ${n}</h2>
+      ${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">Master</span>` : ''}
+      <span class="badge" title=${`Stack ${s}`}>${stackName}</span>
       ${cd !== undefined && cd > 0 ? val(this, h, cdId, html`<span class="tag warn">Emergency ${clock(cd)}</span>`) : ''}
       ${
         err
@@ -370,7 +329,7 @@ export class PackCardPack extends LitElement {
       <span class="sp"></span>
       <span class="nav">
         ${unitSwitch(this.unit, this._setUnit)}
-        <button type="button" class="btn pri" @click=${this._openCells}>Zellanalyse →</button>
+        <button type="button" class="btn" @click=${this._openCells}>Zellanalyse</button>
         <button
           type="button"
           class="btn prev"
@@ -396,7 +355,7 @@ export class PackCardPack extends LitElement {
   }
 
   private renderSwitches(p: PackConfig): TemplateResult {
-    return html`<div class="ctrls" role="group" aria-label="Schalter">${SWITCHES.map((d) => this.renderSwitch(p, d))}</div>`;
+    return html`<div class="ctrls surf" role="group" aria-label="Schalter">${SWITCHES.map((d) => this.renderSwitch(p, d))}</div>`;
   }
 
   private renderSwitch(p: PackConfig, d: SwitchDef): TemplateResult {
@@ -499,10 +458,10 @@ export class PackCardPack extends LitElement {
         ],
       },
     ]);
-    return html`<article class="case" aria-label=${`Pack ${n}`}>
+    return html`<article class="case surf" aria-label=${`Pack ${n}`}>
       <div class="case-top">
         <span class="plate-w"
-          ><span class="plate">Pack ${n}</span>${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">M</span>` : ''}</span
+          ><span class="plate">Pack ${n}</span>${n === 1 ? html`<span class="badge-m" title="Master am CAN zum Cerbo">Master</span>` : ''}</span
         >
         ${bleInfo(this, h, p, fresh, age)}
       </div>
@@ -542,7 +501,7 @@ export class PackCardPack extends LitElement {
     if (rtf !== undefined || !exists(h, E('total_runtime'))) add('BMS', E('total_runtime_formatted'), rtf ?? DASH, 'Laufzeit des BMS');
     else add('BMS', E('total_runtime'), uptimeText(secondsOf(h, E('total_runtime'))), 'Laufzeit des BMS');
     add('Starts', E('power_on_count'), count(numberOf(h, E('power_on_count'))), 'Einschaltungen des BMS');
-    return html`<div class="diag" aria-label="BLE-Diagnose">
+    return html`<div class="diag surf" aria-label="BLE-Diagnose">
       <b>BLE</b>${items.length ? items : html`<span>keine Diagnosewerte</span>`}
     </div>`;
   }

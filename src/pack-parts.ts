@@ -153,86 +153,76 @@ export function balancerState(hass: Hass | undefined, p: PackConfig, ext: Extrem
   return { raw, cells, title: `${what}: höchste und niedrigste Zelle` };
 }
 
-/**
- * Bottom row of the enclosure as on the real pack (E17): left two plus terminals (orange), in the middle the lamps
- * RUN/ALM/BAL/EMG like the LED bar of the BMS board, right two minus terminals.
- */
+/** Bottom row of the enclosure (E17, E26): the lamps RUN/ALM/BAL/EMG like the LED bar of the BMS board, right-aligned. */
 export function caseBottom(leds: TemplateResult): TemplateResult {
-  return html`<div class="case-bot">
-    <span class="terms" aria-hidden="true"><span class="term pos"></span><span class="term pos"></span></span>
-    ${leds}
-    <span class="terms" aria-hidden="true"><span class="term neg"></span><span class="term neg"></span></span>
-  </div>`;
+  return html`<div class="case-bot">${leds}</div>`;
 }
 
 /**
- * Enclosure modeled on the real pack (E17, E19): type plate top center, BLE level and data age on the right; below
- * SoC battery and the screen in its bezel; at the bottom terminal caps and lamps. Shared by speicher and the pack view.
+ * Enclosure modeled on the real pack (E17, E19, E26): type plate as pill on the left, BLE level and data age on the
+ * right; below SoC battery and the value area; at the bottom the lamps. Without bezel and terminal caps (E26).
+ * Shared by speicher and the pack view.
  */
 export const caseStyles = css`
   .case {
     position: relative;
     background: var(--pc-card);
-    border: 2px solid var(--pc-line);
-    border-radius: 8px;
-    padding: 5px 10px 0;
+    border: 1px solid var(--pc-line);
+    border-radius: var(--pc-r-md);
+    padding: 8px 12px;
     display: grid;
-    gap: 4px;
+    gap: 8px;
     min-width: 0;
   }
   .case.soc-lo {
-    border-color: var(--pc-bad);
+    border: 2px solid var(--pc-bad);
+    padding: 7px 11px;
   }
   .case.soc-hi {
-    border-color: var(--pc-ok);
+    border: 2px solid var(--pc-ok);
+    padding: 7px 11px;
   }
   .case-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 4px 8px;
     min-width: 0;
-  }
-  .case-top .plate-w {
-    grid-column: 2;
-  }
-  .case-top .ble {
-    grid-column: 3;
-    justify-self: end;
   }
   .plate-w {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    min-width: 0;
   }
   .plate {
-    border: 1px solid color-mix(in srgb, var(--pc-plate-fg) 22%, transparent);
-    background: var(--pc-plate);
-    color: var(--pc-plate-fg);
-    border-radius: 2px;
-    padding: 1px 12px;
+    border: 0;
+    background: var(--pc-raise);
+    color: var(--pc-fg);
+    border-radius: var(--pc-r-pill);
+    padding: 6px 12px;
     font: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.35;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    font-size: var(--pc-fs-m);
+    font-weight: var(--ha-font-weight-medium, 500);
+    line-height: 1;
     white-space: nowrap;
   }
   button.plate {
     cursor: pointer;
   }
   button.plate:hover {
-    box-shadow: 0 0 0 2px var(--pc-accent);
+    background: var(--pc-fill-pri);
+    color: var(--pc-accent);
   }
   button.plate:focus-visible {
     outline: 2px solid var(--pc-accent);
     outline-offset: 2px;
   }
-  /* screen as high as the battery including SoC and SoH, so no empty space remains above and below the bezel */
+  /* value area as high as the battery including SoC and SoH */
   .case-mid {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 10px;
+    gap: 12px;
     align-items: stretch;
     min-width: 0;
   }
@@ -240,147 +230,86 @@ export const caseStyles = css`
     display: grid;
     justify-items: center;
     align-content: center;
-    gap: 1px;
+    gap: 2px;
     text-align: center;
+    line-height: 1.2;
   }
   .soc svg {
     display: block;
   }
   .soc b {
+    font-weight: var(--ha-font-weight-medium, 500);
     white-space: nowrap;
   }
   .soc .soh {
     color: var(--pc-fg2);
     white-space: nowrap;
   }
-  /* screen in a dark bezel like the window of the BMS display */
+  /* former bezel: only a layout wrapper around the value area (E26) */
   .bezel {
     display: flex;
-    border: 4px solid var(--pc-bezel);
-    border-radius: 6px;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-bezel) 60%, transparent);
     min-width: 0;
   }
   .bezel .scr {
     flex: 1;
     display: grid;
     align-content: center;
-    border: 0;
-    border-radius: 2px;
   }
-  /* bottom row: terminal caps stand on the bottom edge, below them the cable stub */
   .case-bot {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 8px;
+    display: flex;
+    justify-content: flex-end;
     min-width: 0;
   }
   .case-bot .leds {
-    justify-self: center;
-    align-self: center;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-end;
     row-gap: 2px;
-    padding-bottom: 4px;
-  }
-  .terms {
-    display: inline-flex;
-    gap: 6px;
-    padding: 0 4px;
-  }
-  .term {
-    position: relative;
-    width: 24px;
-    height: 17px;
-    margin-bottom: 6px;
-    border-radius: 5px 5px 3px 3px;
-    flex: none;
-  }
-  .term::before {
-    content: '';
-    position: absolute;
-    left: 7px;
-    width: 10px;
-    bottom: -6px;
-    height: 6px;
-    background: var(--pc-term-neg);
-  }
-  .term.pos {
-    background: var(--pc-term-pos);
-  }
-  .term.neg {
-    background: var(--pc-term-neg);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-fg3) 35%, transparent);
-  }
-  .term.pos::after {
-    content: '+';
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .term.neg::after {
-    content: '';
-    position: absolute;
-    left: 7px;
-    right: 7px;
-    top: 7px;
-    height: 3px;
-    border-radius: 1px;
-    background: #d9d9d9;
   }
 `;
 
 /** Styles of lamps, BLE indicator, master badge and screen tint, shared by enclosure and pack view. */
 export const packPartStyles = css`
   .badge-m {
-    font-size: 10px;
-    font-weight: 700;
-    border: 1px solid var(--pc-accent);
+    font-size: var(--pc-fs-s);
+    font-weight: var(--ha-font-weight-medium, 500);
+    line-height: 1.2;
+    background: var(--pc-fill-pri);
     color: var(--pc-accent);
-    border-radius: 4px;
-    padding: 0 4px;
+    border-radius: var(--pc-r-pill);
+    padding: 2px 8px;
+    white-space: nowrap;
   }
   .leds {
     display: inline-flex;
-    gap: 8px;
-    font-size: 10px;
-    letter-spacing: 0.05em;
+    gap: 12px;
+    font-size: var(--pc-fs-s);
+    line-height: 1.2;
     color: var(--pc-fg3);
     align-items: center;
   }
   .led {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
   }
   .led i {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: color-mix(in srgb, var(--pc-fg3) 40%, transparent);
   }
   .led.on.run i {
     background: var(--pc-ok);
-    box-shadow: 0 0 6px var(--pc-ok);
   }
   .led.on.alm i {
     background: var(--pc-bad);
-    box-shadow: 0 0 6px var(--pc-bad);
   }
   .led.on.bal i {
     background: var(--pc-bal);
-    box-shadow: 0 0 6px var(--pc-bal);
     animation: blink 1.2s ease-in-out infinite;
   }
   .led.on.em i {
     background: var(--pc-warn);
-    box-shadow: 0 0 6px var(--pc-warn);
   }
   @keyframes blink {
     50% {
@@ -391,13 +320,14 @@ export const packPartStyles = css`
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11.5px;
+    font-size: var(--pc-fs-s);
+    line-height: 1.2;
     color: var(--pc-fg2);
     white-space: nowrap;
   }
   .dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     display: inline-block;
     background: var(--pc-ok);
@@ -407,10 +337,9 @@ export const packPartStyles = css`
     background: var(--pc-bad);
   }
   .scr {
-    border-radius: 6px;
-    padding: 5px 8px;
+    border-radius: var(--pc-r-md);
+    padding: 8px 12px;
     background: var(--pc-screen);
-    border: 1px solid var(--pc-line);
     min-width: 0;
   }
   .scr.t-soft {

@@ -47,14 +47,17 @@ export class PackCardHold extends LitElement {
         position: relative;
         overflow: hidden;
         width: 100%;
+        height: 40px;
         border: 1px solid var(--pc-warn);
-        color: var(--pc-warn);
+        color: var(--pc-warn-on);
         background: transparent;
-        border-radius: 8px;
-        padding: 6px 11px;
+        border-radius: var(--pc-r-pill);
+        padding: 0 16px;
         font: inherit;
-        font-size: 13px;
-        font-weight: 500;
+        font-size: var(--pc-fs-m);
+        font-weight: var(--ha-font-weight-medium, 500);
+        line-height: 1;
+        white-space: nowrap;
         cursor: pointer;
         touch-action: none;
         user-select: none;
@@ -63,7 +66,7 @@ export class PackCardHold extends LitElement {
       }
       button.bad {
         border-color: var(--pc-bad);
-        color: var(--pc-bad);
+        color: var(--pc-bad-on);
       }
       .fill {
         position: absolute;
@@ -82,7 +85,11 @@ export class PackCardHold extends LitElement {
       }
       button.on {
         background: var(--pc-warn);
-        color: var(--pc-card);
+        color: rgba(0, 0, 0, 0.87);
+      }
+      button.bad.on {
+        background: var(--pc-bad);
+        color: #fff;
       }
       button.on .fill {
         background: color-mix(in srgb, var(--pc-card) 35%, transparent);
@@ -99,12 +106,13 @@ export class PackCardHold extends LitElement {
         position: relative;
       }
       button.sw {
-        border-color: var(--pc-line);
+        height: auto;
+        border: 0;
+        border-radius: 0;
         color: var(--pc-fg);
-        background: var(--pc-card);
-        font-size: 12.5px;
-        font-weight: 400;
-        padding: 5px 8px;
+        background: transparent;
+        padding: 8px 12px;
+        white-space: normal;
       }
       /* The fill is the only feedback while holding and therefore also runs with reduced motion. */
     `,

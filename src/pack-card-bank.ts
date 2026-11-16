@@ -58,13 +58,10 @@ export class PackCardBank extends LitElement {
       }
       /* two halves of equal width, gap as between the stacks */
       .bank {
-        background: var(--pc-screen);
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
-        padding: 10px;
+        padding: 16px;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 10px 14px;
+        gap: 16px;
         align-items: stretch;
       }
       .lhs {
@@ -72,7 +69,7 @@ export class PackCardBank extends LitElement {
         grid-template-columns: auto minmax(0, 1fr);
         grid-template-areas: 'batt shunt' 'batt em';
         grid-template-rows: minmax(0, 1fr) auto;
-        gap: 8px 10px;
+        gap: 8px 16px;
         min-width: 0;
       }
       /* battery as in the enclosures (E17): 46 px wide, SoC and SoH below */
@@ -81,7 +78,7 @@ export class PackCardBank extends LitElement {
         display: grid;
         justify-items: center;
         align-content: start;
-        gap: 1px;
+        gap: 2px;
         min-width: 58px;
         text-align: center;
       }
@@ -92,18 +89,20 @@ export class PackCardBank extends LitElement {
       }
       .batt b,
       .batt .soh {
-        font-size: 11px;
+        font-size: var(--pc-fs-s);
+        line-height: 1.2;
         white-space: nowrap;
+      }
+      .batt b {
+        font-weight: var(--ha-font-weight-medium, 500);
       }
       .batt .soh {
         color: var(--pc-fg2);
       }
-      .grp {
-        border: 1px solid var(--pc-line);
-        border-radius: 8px;
-        padding: 6px 10px;
-        background: color-mix(in srgb, var(--pc-card) 55%, transparent);
-        font-size: 13px;
+      /* right half separated by a line instead of its own frame (E26) */
+      .grp.bms {
+        border-left: 1px solid var(--pc-line);
+        padding-left: 16px;
       }
       .grp.shunt {
         grid-area: shunt;
@@ -122,11 +121,20 @@ export class PackCardBank extends LitElement {
         .bank {
           grid-template-columns: minmax(0, 1fr);
         }
+        .grp.bms {
+          border-left: 0;
+          padding-left: 0;
+          border-top: 1px solid var(--pc-line);
+          padding-top: 16px;
+        }
       }
       @container (max-width: 519px) {
         .bank {
-          padding: 6px;
-          gap: 6px;
+          padding: 12px;
+          gap: 12px;
+        }
+        .grp.bms {
+          padding-top: 12px;
         }
         .grp .wide {
           display: none;
@@ -138,12 +146,10 @@ export class PackCardBank extends LitElement {
           display: flex;
         }
         .lhs {
-          gap: 6px 8px;
+          gap: 8px 12px;
         }
         .grp {
-          font-size: 12px;
-          column-gap: 5px;
-          padding: 5px 6px;
+          column-gap: 8px;
         }
       }
     `,
@@ -152,7 +158,7 @@ export class PackCardBank extends LitElement {
   protected render(): TemplateResult {
     try {
       return html`<div class="wrap">
-        <div class="bank">
+        <div class="bank surf">
           <div class="lhs">
             ${this.renderBatt()}${this.renderShunt()}
             <pack-card-emergency .hass=${this.hass} .packs=${this.packs} .now=${this.now}></pack-card-emergency>

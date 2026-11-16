@@ -23,53 +23,49 @@ export class PackCardStackHead extends LitElement {
         display: block;
         container-type: inline-size;
       }
+      /* heading above the stack card like the heading card (E26): name, ESP values as badges, ESP reboot */
       .h {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 4px 10px;
-        padding: 7px 10px;
-        background: var(--pc-raise);
-        border-bottom: 1px solid var(--pc-line);
-      }
-      .name {
-        font-weight: 500;
-        font-size: 15px;
+        gap: 4px 8px;
+        min-height: 40px;
       }
       .name.link {
-        font-size: 15px;
+        font-size: var(--pc-fs-l);
+        font-weight: var(--ha-font-weight-normal, 400);
+        color: var(--pc-fg);
       }
       .esp {
         display: flex;
         flex-wrap: wrap;
-        gap: 2px 10px;
-        font-size: 12px;
-        color: var(--pc-fg2);
-      }
-      pack-card-hold::part(button) {
-        padding: 3px 10px;
-        font-size: 12.5px;
-      }
-      /* phone: name, ESP values and "ESP reboot" in one line */
-      @container (max-width: 379px) {
-        .h {
-          gap: 4px 7px;
-          padding: 7px 8px;
-        }
-        .name {
-          font-size: 14px;
-        }
-        .esp {
-          gap: 2px 7px;
-          font-size: 11.5px;
-        }
-        pack-card-hold::part(button) {
-          padding: 3px 7px;
-          font-size: 12px;
-        }
+        gap: 4px 8px;
       }
       .esp .v {
         color: var(--pc-fg);
+      }
+      pack-card-hold::part(button) {
+        height: 32px;
+        padding: 0 12px;
+      }
+      /* phone: name, ESP values and "ESP reboot" stay in one line */
+      @container (max-width: 419px) {
+        .h {
+          gap: 4px;
+        }
+        .esp {
+          gap: 0 8px;
+        }
+        .badge {
+          border: 0;
+          background: none;
+          padding: 0;
+          font-weight: var(--ha-font-weight-normal, 400);
+          color: var(--pc-fg2);
+        }
+        pack-card-hold::part(button) {
+          padding: 0 8px;
+        }
       }
     `,
   ];
@@ -88,8 +84,8 @@ export class PackCardStackHead extends LitElement {
       return html`<div class="h">
         ${this.renderName(st.name ?? `Stack ${s}`, [up, restart, temp, wifi])}
         <span class="esp">
-          <span>${tempLabel('ESP', false)} ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
-          <span>WLAN ${val(this, h, wifi, snum(numberOf(h, wifi), 0, 'dBm'))}</span>
+          <span class="badge">${tempLabel('ESP', false)} ${val(this, h, temp, num(numberOf(h, temp), 1, '°C'))}</span>
+          <span class="badge">WLAN ${val(this, h, wifi, snum(numberOf(h, wifi), 0, 'dBm'))}</span>
         </span>
         <span class="sp"></span>
         <pack-card-hold
@@ -110,10 +106,10 @@ export class PackCardStackHead extends LitElement {
   /** Stack name as link to the device page of the ESP, only for admins and if the registry knows the device. */
   private renderName(name: string, ids: string[]): TemplateResult {
     const dev = deviceOf(this.hass, ids);
-    if (!dev || !this.hass?.user?.is_admin) return html`<span class="name">${name}</span>`;
+    if (!dev || !this.hass?.user?.is_admin) return html`<span class="name ttl">${name}</span>`;
     return html`<button
       type="button"
-      class="link name"
+      class="link name ttl"
       title="Geräteseite des ESP in Home Assistant"
       @click=${() => navigate(`/config/devices/device/${dev}`)}
     >

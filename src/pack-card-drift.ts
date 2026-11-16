@@ -86,40 +86,38 @@ export class PackCardDrift extends LitElement {
         display: block;
       }
       .box {
-        border: 1px solid var(--pc-line);
-        border-radius: 10px;
-        padding: 10px;
+        padding: 12px 16px 16px;
         min-width: 0;
         display: grid;
-        gap: 6px;
+        gap: 8px;
       }
       h3 {
-        font-size: 14px;
-        font-weight: 500;
+        font-size: var(--pc-fs-l);
+        font-weight: var(--ha-font-weight-normal, 400);
         margin: 0;
       }
       p {
         margin: 0;
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
       }
       .leg {
         display: flex;
         flex-wrap: wrap;
         gap: 4px 16px;
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         align-items: center;
       }
       .leg i {
         display: inline-block;
         width: 14px;
         height: 3px;
-        border-radius: 2px;
+        border-radius: var(--pc-r-sm);
         vertical-align: 3px;
         margin-right: 5px;
       }
       .read {
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
         min-height: 1.4em;
         font-variant-numeric: tabular-nums;
@@ -135,7 +133,7 @@ export class PackCardDrift extends LitElement {
       }
       svg text {
         fill: var(--pc-fg2);
-        font-size: 10.5px;
+        font-size: var(--pc-fs-s);
         font-variant-numeric: tabular-nums;
       }
       .grid line {
@@ -155,7 +153,7 @@ export class PackCardDrift extends LitElement {
         stroke-dasharray: 3 3;
       }
       .msg {
-        font-size: 12.5px;
+        font-size: var(--pc-fs-s);
         color: var(--pc-fg2);
         padding: 18px 4px;
         text-align: center;
@@ -261,7 +259,7 @@ export class PackCardDrift extends LitElement {
         ${z !== undefined ? packCell(n, z) : DASH} · ${snum(v, 2, 'mV')}`;
       return exists(this.hass, id) ? val(this, this.hass, id, label, `lg-${side}`) : html`<span class="lg-${side}" title="${id} fehlt">${label}</span>`;
     };
-    return html`<div class="box drift">
+    return html`<div class="box drift surf">
       <h3>Drift der Leitzellen · Pack ${n || DASH}</h3>
       <p>
         Tageswerte der Abweichung der jeweils führenden Zelle vom Packmittel, Charge, gleitend über 30 Tage (fest, unabhängig
