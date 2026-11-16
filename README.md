@@ -12,7 +12,7 @@ HACS → menu → Custom repositories → `https://github.com/juniormajor/batter
 
 ```yaml
 type: custom:pack-card
-view: speicher        # speicher | pack | zellen
+view: speicher        # speicher | pack | zellen | bank
 packs: [1, 2, 3, 4, 5, 6]
 stacks:
   - stack: 1
@@ -21,7 +21,7 @@ stacks:
     name: Stack 2
 ```
 
-Click targets (optional): `pack_path` is the pack view (default `pack`), `zellen_path` the cell analysis (default `zellen`), `speicher_path` the target of the pack view's back link (default `speicher`), each relative to the current dashboard (`/<dashboard-url>/pack`) or absolute from `/`. The cell ID of the BMS master at the GX ("MM::CC") is shown as pack:cell: module 00 is Pack_1, 02 to 06 are Pack_2 to Pack_6. A click on "Pack n" first sets `input_select.zellen_pack` to `Pack_<n>`.
+Click targets (optional): `pack_path` is the pack view (default `pack`), `zellen_path` the cell analysis (default `zellen`), `speicher_path` the target of the pack view's back link and of the bank view's "Packs und Zellen" button (default `speicher`), each relative to the current dashboard (`/<dashboard-url>/pack`) or absolute from `/`. The cell ID of the BMS master at the GX ("MM::CC") is shown as pack:cell: module 00 is Pack_1, 02 to 06 are Pack_2 to Pack_6. A click on "Pack n" first sets `input_select.zellen_pack` to `Pack_<n>`.
 
 ```yaml
 pack_path: pack
@@ -30,6 +30,8 @@ speicher_path: speicher
 ```
 
 The view `speicher` shows the bank display at the top in two halves of equal width (left the SoC battery, the shunt with "Kapazität: Rest (installiert)" and the central "Emergency" button for all packs, right the BMS master) and below it one card per stack with a heading above it (stack name, ESP temperature and Wi-Fi as badges, "ESP reboot"; for admins, the stack name links to the ESP's device page in Home Assistant) and the packs as simplified enclosures of the real pack: type plate, SoC battery and a value area with "U / I / P", "Kapazität: Rest (voll)" from `capacity_remaining` and `full_charge_capacity` in the unit of the bank display, "ΔU / I Bal" and temperature, at the bottom the lamps RUN, ALM, BAL and EMG. Hold buttons (Emergency, ESP reboot, Pack reboot) show only their name; while held, the button fills for one second, also with reduced motion. Speicher and pack are at most 900 px wide and centered; a theme can change this via `--pack-card-max-width`. The cell analysis uses the full width.
+
+The view `bank` is a compact card for Sections views next to standard cards: the heading "Speicher gesamt" with the Ah/kWh toggle and a "Packs und Zellen" button to the speicher view, below it the same bank display as in `speicher` (SoC, SoH, U / I / P, capacity, remaining time, cell max/min, temperature, modules online, alarms and the central Emergency). It fills the width the Sections grid gives it (12 columns by default, at least 6) and stacks its halves below about 700 px.
 
 The view `pack` shows the pack from `input_select.zellen_pack` (`Pack_<n>`); if the helper is missing or its value is not a configured pack, the first pack from `packs`. Paging forward and back only sets the helper. Charge, Discharge and Bluetooth switch on with a single tap but off only after holding for one second; Emergency and Pack reboot (BMS restart) require one second of holding in both directions. If a pack has delivered no data for more than 180 s, Charge, Discharge, Balancer, Float, Emergency and Pack reboot are locked because the command would not reach the BMS; Bluetooth stays operable. The central Emergency skips such packs. As in the speicher view, the pack values show the capacity below "U / I / P", with the same Ah/kWh toggle in the header; the choice applies to speicher and pack and is remembered per browser. The "BLE" row summarizes reconnects, watchdog interventions, last intervention, keepalive, BMS runtime and power-ons. Each cell is shown as "no. voltage / internal resistance" in a frame as wide as its content; while balancing current flows, a line with moving dots and an arrow shows the flow from the highest to the lowest cell.
 
@@ -68,7 +70,7 @@ node test/render/shot.cjs /tmp/render "pack=view=pack&bal=1@1500" "pack-dark=vie
 node test/render/hold.cjs
 ```
 
-`npm test` type-checks and builds the card and renders the default variants into `render-out/`. `shot.cjs` saves a PNG per variant, reports console errors and horizontal overflow, and exits with code 1 if any variant fails; the query selects the variant (`view`, `dark=1`, `unit=kWh`, `pack=<n>`, balancing `bal=<n>`, error text `err=<n>`, Emergency `em=<n>`, without data `off=<n>`, non-admin `admin=0`). `hold.cjs` holds Emergency and ESP reboot during frequent `hass` updates and prints the fill of the button.
+`npm test` type-checks and builds the card and renders the default variants into `render-out/`. `shot.cjs` saves a PNG per variant, reports console errors and horizontal overflow, and exits with code 1 if any variant fails; the query selects the variant (`view`, panel width `w=<px>` for `bank`, `dark=1`, `unit=kWh`, `pack=<n>`, balancing `bal=<n>`, error text `err=<n>`, Emergency `em=<n>`, without data `off=<n>`, non-admin `admin=0`). `hold.cjs` holds Emergency and ESP reboot during frequent `hass` updates and prints the fill of the button.
 
 ## Maintenance
 

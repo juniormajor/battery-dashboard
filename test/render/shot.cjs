@@ -3,7 +3,7 @@
 // and reports console errors and horizontal overflow of the card. Exits with code 1 if any variant has errors,
 // overflow or a page wider than the viewport. Without arguments it renders the default variants into
 // render-out/ (used by npm test and the CI).
-// Query: view=speicher|pack|zellen, dark=1, unit=kWh, pack=<n>, bal=<n>, err=<n>, em=<n>, off=<n>, admin=0 (mock.js)
+// Query: view=speicher|pack|zellen|bank, w=<px> (panel width for bank), dark=1, unit=kWh, pack=<n>, bal=<n>, err=<n>, em=<n>, off=<n>, admin=0 (mock.js)
 const { chromium } = require('playwright');
 const http = require('http');
 const fs = require('fs');
@@ -19,6 +19,9 @@ const DEFAULT_JOBS = [
   'pack-offline=view=pack&pack=4&off=4&admin=0@1500',
   'zellen=view=zellen@1500',
   'zellen-handy=view=zellen@390',
+  'bank=view=bank&w=600@1500',
+  'bank-breit=view=bank&w=900@1500',
+  'bank-handy=view=bank&dark=1&em=3@390',
 ];
 const out = process.argv[2] || path.join(root, '..', '..', 'render-out');
 const jobs = process.argv.length > 3 ? process.argv.slice(3) : DEFAULT_JOBS;
